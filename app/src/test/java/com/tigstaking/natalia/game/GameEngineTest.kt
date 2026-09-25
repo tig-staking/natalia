@@ -30,26 +30,25 @@ class GameEngineTest {
         val place = samplePlace()
 
         try {
-            val lockedQuest = runCatching { engine.completeQuest(place) }
-            assertTrue("Quest must stay locked until discovery", lockedQuest.isFailure)
+            assertTrue("Quest must stay locked until discovery", runCatching {
+                engine.completeQuest(place)
+            }.isFailure)
 
             engine.simulateDiscovery(place)
-            engine.completeQuest(place)
-            val lockedWord = runCatching { engine.learnSpanishWord(place).also { error("Expected word lock") } }
-            assertTrue("Word must stay locked until quest completion", lockedWord.isFailure)
+            assertTrue("Word must stay locked until quest completion", runCatching {
+                engine.learnSpanishWord(place)
+            }.isFailure)
 
             engine.completeQuest(place)
-            engine.learnSpanishWord(place)
-            val lockedQuiz = runCatching {
+            assertTrue("Quiz must stay locked until the word is learned", runCatching {
                 engine.answerQuiz(place, place.quiz.correctAnswerIndex)
-                error("Expected quiz lock")
-            }
-            assertTrue("Quiz must stay locked until the word is learned", lockedQuiz.isFailure)
+            }.isFailure)
 
             engine.learnSpanishWord(place)
+            val xpBeforeWrongAnswer = repository.progress.first().xp
             val wrongAnswer = engine.answerQuiz(place, 1)
             assertTrue(wrongAnswer is QuizAnswerResult.TryAgain)
-            assertEquals(40, repository.progress.first().xp)
+            assertEquals(xpBeforeWrongAnswer, repository.progress.first().xp)
 
             val correctAnswer = engine.answerQuiz(place, place.quiz.correctAnswerIndex)
             assertTrue(correctAnswer is QuizAnswerResult.Correct)
