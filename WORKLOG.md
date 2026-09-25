@@ -21,7 +21,7 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 - Reward redemption supports a persistent request/approval flow: requested stars are reserved without being spent, approval spends them once, cancellation releases the reservation, and duplicate actions are idempotent.
 - Home lets the player request a 10-star reward; a parent can review, approve, or reject pending requests in a PIN-gated dialog.
 - Parent PIN is configured on first use, checked as a keyed HMAC using a non-exportable Android Keystore key, and protected by a 30-second lockout after five failed attempts. The PIN itself is not persisted. The PIN credential is device-local; a new device or reinstall requires setup again.
-- Debug-only Developer Mode can advance one game stage at a time, add test stars, force the next level, spend test stars, reset all progress with confirmation, and inspect permission/provider/fresh-fix GPS diagnostics. It uses the same ordered GameEngine methods as the player flow.
+- Debug-only Developer Mode can advance one game stage at a time, add test stars, force the next level, spend test stars, reset all progress with confirmation, inspect permission/provider/fresh-fix GPS diagnostics, and run inside/outside/low-accuracy simulated check-ins through `GameEngine.checkIn`.
 - Check-in errors for missing permission, disabled location services, and unavailable fresh location are shown as actionable Polish messages.
 - Foreground one-shot Fused Location Provider checks coarse/fine permission, enabled location providers, and a fresh location. No background location or route history.
 - A Compose instrumentation smoke test launches the app and opens the Sagrada Família check-in screen.
@@ -44,7 +44,7 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 
 1. Run the Compose smoke test on an Android Studio emulator or connected Android device; then field-test GPS behavior on a physical phone.
 2. Verify the new parent PIN and approval flow on a device. Add focused coverage for PIN lockout and approval UI. The credential is intentionally per-device; parent PIN setup must be repeated after installing on another device.
-3. Finish Developer Mode: simulate/override coordinates and location quality, reset a single POI, and create a test POI at current location. Debug builds can already advance ordered stages, add stars, force the next level, spend test stars, reset all progress with confirmation, and inspect GPS permissions, providers, and fresh-fix accuracy/age.
+3. Finish Developer Mode: reset a single POI and create a test POI at current location. Debug builds can already simulate inside/outside/low-accuracy check-ins, advance ordered stages, add stars, force the next level, spend test stars, reset all progress with confirmation, and inspect GPS permissions, providers, and fresh-fix accuracy/age.
 4. Add onboarding and an actual map/POI overview. Exercise recovery paths for permission denied, approximate location, disabled GPS, and stale/unavailable fixes on real devices.
 5. Add Spanish TextToSpeech using `es-ES`, handling unavailable TTS without crashing.
 6. Add required celebration/avatar/level-up/badge animations after the functional game flow works.
@@ -68,4 +68,4 @@ For local setup on another computer, follow [docs/LOCAL_DEVELOPMENT.md](docs/LOC
 
 ## Progress estimate
 
-Roughly 18% of the full MVP scope. The ordered engine, persistence, GPS rules, parent-gated reward accounting, device-local PIN-gated approval screen, GPS diagnostics, and core debug progression controls are implemented and CI builds successfully. Runtime emulator/GPS validation, location override and test POI tools, map, onboarding, audio, and animations remain. Re-estimate after each major verified milestone.
+Roughly 18% of the full MVP scope. The ordered engine, persistence, GPS rules, parent-gated reward accounting, device-local PIN-gated approval screen, GPS diagnostics, and core debug progression controls are implemented and CI builds successfully. Runtime emulator/GPS validation, single-POI reset and test-POI tools, map, onboarding, audio, and animations remain. The newest simulated geofence controls await CI. Re-estimate after each major verified milestone.

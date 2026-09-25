@@ -44,6 +44,7 @@ import com.tigstaking.natalia.game.CityPackRepository
 import com.tigstaking.natalia.game.GameEngine
 import com.tigstaking.natalia.game.GameProgress
 import com.tigstaking.natalia.game.GameProgressRepository
+import com.tigstaking.natalia.game.Coordinates
 import com.tigstaking.natalia.game.Place
 import com.tigstaking.natalia.game.PlaceCheckInResult
 import com.tigstaking.natalia.game.PlayerLevel
@@ -454,6 +455,39 @@ private fun DeveloperPanel(
             }
             if (gpsDiagnostic.isNotBlank()) Text(gpsDiagnostic)
 
+            fun simulateLocation(coordinates: Coordinates, accuracyMeters: Double) {
+                scope.launch {
+                    when (val result = engine.checkIn(place, coordinates, accuracyMeters)) {
+                        is PlaceCheckInResult.Confirmed -> {
+                            onMessage("Symulacja GPS: miejsce odkryte przy dokładności ±${accuracyMeters.toInt()} m.")
+                            onOpen(result.progress)
+                        }
+                        is PlaceCheckInResult.TooFar ->
+                            onMessage("Symulacja GPS: poza strefą celu (około ${result.distanceMeters.toInt()} m).")
+                        is PlaceCheckInResult.NeedBetterAccuracy ->
+                            onMessage("Symulacja GPS: pozycja niepewna (±${result.accuracyMeters.toInt()} m).")
+                    }
+                }
+            }
+
+            OutlinedButton(
+                onClick = { simulateLocation(place.coordinates, 10.0) },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("SYMULUJ GPS: W CELU") }
+            OutlinedButton(
+                onClick = {
+                    simulateLocation(
+                        place.coordinates.copy(latitude = (place.coordinates.latitude + 0.03).coerceAtMost(89.0)),
+                        5.0,
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("SYMULUJ GPS: POZA STREFĄ") }
+            OutlinedButton(
+                onClick = { simulateLocation(place.coordinates, place.geofenceRadiusMeters + 100.0) },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("SYMULUJ GPS: NISKA DOKŁADNOŚĆ") }
+
             val nextLevel = PlayerLevel.entries.firstOrNull { progress.xp < it.minXp }
             OutlinedButton(
                 enabled = nextLevel != null,
@@ -518,7 +552,7 @@ private fun DeveloperPanel(
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("SIMULATE SAGRADA LOCATION") }
+            ) { Text("ODKRYJ SAGRADĘ BEZ SPRAWDZANIA GPS (DEBUG)") }
         }
     }
 }
