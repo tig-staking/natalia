@@ -32,8 +32,8 @@ jobs:
         with:
           cache-provider: basic
 
-      - name: Run unit tests and build debug APK
-        run: ./gradlew --no-daemon testDebugUnitTest assembleDebug
+      - name: Run unit tests, emulator smoke test, and build debug APK
+        run: ./gradlew --no-daemon testDebugUnitTest assembleDebug pixel2api35DebugAndroidTest -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
 
       - name: Publish debug APK
         uses: actions/upload-artifact@v4

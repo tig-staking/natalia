@@ -16,6 +16,7 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {
@@ -26,6 +27,18 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+
+    testOptions {
+        managedDevices {
+            localDevices {
+                create("pixel2api35") {
+                    device = "Pixel 2"
+                    apiLevel = 35
+                    systemImageSource = "google"
+                }
+            }
+        }
     }
 }
 
@@ -46,6 +59,11 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.1.4")
     implementation("com.google.android.gms:play-services-location:21.4.0")
     debugImplementation("androidx.compose.ui:ui-tooling")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
+    androidTestImplementation(platform("androidx.compose:compose-bom:2025.03.00"))
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
 }

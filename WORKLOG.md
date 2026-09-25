@@ -20,7 +20,8 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 - Preferences DataStore persists progress locally.
 - Foreground one-shot Fused Location Provider checks coarse/fine permission, enabled location providers, and a fresh location. No background location or route history.
 - Check-in considers reported GPS accuracy. It confirms only when the whole accuracy circle fits inside the geofence; an ambiguous fix asks for another reading.
-- GitHub Actions runs unit tests and builds a debug APK. Successful runs upload `natalia-debug-apk` for 14 days.
+- GitHub Actions runs unit tests, builds a debug APK, and is being extended to install the app on a managed API 35 emulator and run a Compose smoke test. This commit's result is pending.
+- Successful CI runs upload `natalia-debug-apk` for 14 days.
 - [`docs/CODE_MAP.md`](docs/CODE_MAP.md) describes file ownership and where to look for common problems.
 
 ## Verification state
@@ -28,12 +29,12 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 - Green GitHub Actions run for code commit `66095d1f95a0114ddaa588ea8cb17fb346639c24`: unit tests and debug APK build passed.
 - The run uploaded debug APK artifact `natalia-debug-apk` (artifact id `10860897629`), available until 2026-10-09.
 - Tests cover core rules, GPS accuracy boundaries, City Pack JSON parsing/validation, ordered game stages, idempotent payouts, DataStore persistence after repository recreation, reward redemption, ledger, and reset.
-- GitHub Actions has not yet installed or exercised the app on an emulator. No on-device GPS test has been run.
-- A docs-only commit is currently running CI; check the latest workflow status before the next code change.
+- The app has not yet passed a managed-emulator launch/navigation test. No on-device GPS test has been run.
+- A docs-only commit's CI is still running; check it before drawing a line against the emulator-test commit.
 
 ## Known gaps to address
 
-1. Add an emulator smoke/full-flow test and inspect app runtime behavior. Then ask the owner to field-test GPS and device behavior on a physical phone.
+1. Verify the managed-emulator smoke test and fix any setup or runtime failures. Then ask the owner to field-test GPS and device behavior on a physical phone.
 2. Finish a real Developer Mode: simulate/override location, unlock POI, complete stages, edit stars, force level, redeem reward, reset POI/all, create test POI at current location, and show GPS diagnostics. Current debug shortcut only simulates Sagrada discovery.
 3. Add parent approval and PIN flow. Never store a plain-text PIN. A reward request must wait for approval; successful redemption spends stars only.
 4. Add onboarding, actual map/POI overview, location diagnostics, and recovery paths for permission denied, approximate location, disabled GPS, stale/unavailable fixes.
@@ -46,7 +47,7 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 GitHub Actions command:
 
 ```sh
-./gradlew --no-daemon testDebugUnitTest assembleDebug
+./gradlew --no-daemon testDebugUnitTest assembleDebug pixel2api35DebugAndroidTest -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
 ```
 
 For local setup on another computer, follow [docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md). Use JDK 17 and Android SDK platform 35. Current Android build toolchain: Gradle 8.13, AGP 8.13.2, Kotlin 2.3.20.

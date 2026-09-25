@@ -26,15 +26,16 @@ MainActivity (Compose screens and user actions)
 - `app/src/test/java/com/tigstaking/natalia/game/CityPackTest.kt` — City Pack JSON parse and schema/content validation.
 - `app/src/test/java/com/tigstaking/natalia/game/GameEngineTest.kt` — Ordered Sagrada flow, locked stages, and one-time payouts.
 - `app/src/test/java/com/tigstaking/natalia/game/GameProgressRepositoryTest.kt` — Persistence after repository recreation, ledger, redemption, and reset.
+- `app/src/androidTest/java/com/tigstaking/natalia/HomeSmokeTest.kt` — Launches the app on an Android emulator, opens the Sagrada Família screen, and verifies the GPS check-in control.
 
-Add or update the test next to the behavior being changed. GitHub Actions runs these tests with the debug APK build.
+Add or update the test next to the behavior being changed. GitHub Actions runs unit and emulator smoke tests with the debug APK build.
 
 ## Build and CI
 
-- `app/build.gradle.kts` — Android app SDK levels, JVM target, and app/test dependencies.
+- `app/build.gradle.kts` — Android app SDK levels, JVM target, managed emulator, and app/test dependencies.
 - `build.gradle.kts` — Android Gradle Plugin and Kotlin plugin versions.
 - `gradle/wrapper/gradle-wrapper.properties` — Gradle distribution used on every computer and in CI.
-- `.github/workflows/android.yml` — JDK/Android SDK setup, unit tests, debug APK build, and APK artifact upload.
+- `.github/workflows/android.yml` — JDK/Android SDK setup, unit tests, managed-emulator smoke test, debug APK build, and APK artifact upload.
 
 ## Where to look for common problems
 
@@ -46,5 +47,6 @@ Add or update the test next to the behavior being changed. GitHub Actions runs t
 | A POI or quiz is wrong | `barcelona.json`, `CityPack.kt`, `CityPackTest.kt` |
 | Place unlocks from too far away or GPS is inconclusive | `GameProgress.kt`, `GameEngine.kt`, `LocationProvider.kt`, `GameRulesTest.kt` |
 | Gradle fails before compiling app code | `gradle-wrapper.properties`, root `build.gradle.kts`, `app/build.gradle.kts`, then the Actions log |
+| App launch, navigation, or Compose semantics fail on emulator | `MainActivity.kt`, `HomeSmokeTest.kt`, then the Actions instrumentation logs |
 
 When behavior crosses layers, update the relevant tests and this map if file ownership changes. Do not put secrets or computer-specific paths in this document.
