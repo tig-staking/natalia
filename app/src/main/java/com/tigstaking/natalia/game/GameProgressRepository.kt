@@ -38,6 +38,9 @@ class GameProgressRepository(context: Context) {
     suspend fun completeQuiz(quizId: String, xp: Int, stars: Int): GameProgress =
         awardStageOnce(RewardEvent("quiz:$quizId", "QUIZ", xp, stars), completedQuizzesKey, quizId)
 
+    suspend fun completeSpanishWord(placeId: String, xp: Int, stars: Int): GameProgress =
+        awardStageOnce(RewardEvent("word:$placeId", "SPANISH", xp, stars), completedWordsKey, placeId)
+
     suspend fun redeemOnce(redemptionId: String, cost: Int): Boolean {
         require(redemptionId.isNotBlank()) { "Redemption id must not be blank" }
         require(cost > 0) { "Reward cost must be greater than zero" }
@@ -85,6 +88,7 @@ class GameProgressRepository(context: Context) {
                 discoveredPlaceIds = if (markerKey == discoveredPlacesKey) recorded else updated.discoveredPlaceIds,
                 completedQuestIds = if (markerKey == completedQuestsKey) recorded else updated.completedQuestIds,
                 completedQuizIds = if (markerKey == completedQuizzesKey) recorded else updated.completedQuizIds,
+                completedWordIds = if (markerKey == completedWordsKey) recorded else updated.completedWordIds,
             )
             encode(preferences, result)
         }
@@ -99,6 +103,7 @@ class GameProgressRepository(context: Context) {
         discoveredPlaceIds = prefs[discoveredPlacesKey].orEmpty(),
         completedQuestIds = prefs[completedQuestsKey].orEmpty(),
         completedQuizIds = prefs[completedQuizzesKey].orEmpty(),
+        completedWordIds = prefs[completedWordsKey].orEmpty(),
         earnedBadgeIds = prefs[earnedBadgesKey].orEmpty(),
         redeemedRewardIds = prefs[redeemedRewardsKey].orEmpty(),
     )
@@ -111,6 +116,7 @@ class GameProgressRepository(context: Context) {
         prefs[discoveredPlacesKey] = state.discoveredPlaceIds
         prefs[completedQuestsKey] = state.completedQuestIds
         prefs[completedQuizzesKey] = state.completedQuizIds
+        prefs[completedWordsKey] = state.completedWordIds
         prefs[earnedBadgesKey] = state.earnedBadgeIds
         prefs[redeemedRewardsKey] = state.redeemedRewardIds
     }
@@ -137,6 +143,7 @@ class GameProgressRepository(context: Context) {
         val discoveredPlacesKey = stringSetPreferencesKey("discovered_places")
         val completedQuestsKey = stringSetPreferencesKey("completed_quests")
         val completedQuizzesKey = stringSetPreferencesKey("completed_quizzes")
+        val completedWordsKey = stringSetPreferencesKey("completed_words")
         val earnedBadgesKey = stringSetPreferencesKey("earned_badges")
         val redeemedRewardsKey = stringSetPreferencesKey("redeemed_rewards")
     }

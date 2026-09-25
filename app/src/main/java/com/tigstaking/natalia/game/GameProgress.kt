@@ -22,6 +22,7 @@ data class GameProgress(
     val discoveredPlaceIds: Set<String> = emptySet(),
     val completedQuestIds: Set<String> = emptySet(),
     val completedQuizIds: Set<String> = emptySet(),
+    val completedWordIds: Set<String> = emptySet(),
     val earnedBadgeIds: Set<String> = emptySet(),
     val redeemedRewardIds: Set<String> = emptySet(),
 ) {

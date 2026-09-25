@@ -53,4 +53,26 @@ class GameRulesTest {
         assertTrue(Proximity.isInside(nearby, sagrada, radiusMeters = 100))
         assertFalse(Proximity.isInside(farAway, sagrada, radiusMeters = 100))
     }
+
+    @Test
+    fun quizAcceptsOnlyTheConfiguredCorrectAnswer() {
+        val quiz = Quiz("q", "Question?", listOf("A", "B", "C"), correctAnswerIndex = 1)
+
+        assertTrue(quiz.isCorrect(1))
+        assertFalse(quiz.isCorrect(0))
+        assertFalse(quiz.isCorrect(-1))
+    }
+
+    @Test
+    fun placeStageRewardsAddUpToConfiguredTotals() {
+        val rewards = PlaceRewards(
+            discovery = RewardAmount(10, 10),
+            quest = RewardAmount(20, 20),
+            spanishWord = RewardAmount(10, 10),
+            quiz = RewardAmount(10, 10),
+        )
+
+        assertEquals(50, rewards.totalXp)
+        assertEquals(50, rewards.totalStars)
+    }
 }

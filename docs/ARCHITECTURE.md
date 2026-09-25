@@ -7,6 +7,7 @@ The Android app lives in `app/`. Compose screens are presentation only; game rul
 - `CityPack` parses versioned city/place data, starting with one Barcelona place.
 - `GameProgress` applies XP/star events only once and rejects XP spending or negative star balances.
 - `GameProgressRepository` stores progress locally with Preferences DataStore and records an append-only reward ledger.
+- `GameEngine` awards discovery, quest, Spanish word and quiz rewards from each place's reward plan; wrong quiz answers can be retried without changing progress.
 - `Proximity` calculates straight-line distance in meters and checks a place radius.
 - `PlayerLevel` maps XP to the four levels in the product spec.
 

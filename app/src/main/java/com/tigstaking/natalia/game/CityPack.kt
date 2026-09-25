@@ -29,6 +29,7 @@ data class CityPack(
                     val quest = place.getJSONObject("quest")
                     val quiz = place.getJSONObject("quiz")
                     val answers = quiz.getJSONArray("answers")
+                    val rewards = place.getJSONObject("rewards")
                     Place(
                         id = place.getString("id"),
                         name = place.getString("name"),
@@ -37,7 +38,11 @@ data class CityPack(
                         intro = place.getString("intro"),
                         fact = place.getString("fact"),
                         spanishWord = SpanishWord(word.getString("word"), word.getString("meaning")),
-                        quest = Quest(quest.getString("id"), quest.getString("type"), quest.getString("prompt")),
+                        quest = Quest(
+                            quest.getString("id"),
+                            QuestType.valueOf(quest.getString("type")),
+                            quest.getString("prompt"),
+                        ),
                         quiz = Quiz(
                             id = quiz.getString("id"),
                             question = quiz.getString("question"),
@@ -46,6 +51,12 @@ data class CityPack(
                         ),
                         xp = place.getInt("xp"),
                         stars = place.getInt("stars"),
+                        rewards = PlaceRewards(
+                            discovery = rewards.getJSONObject("discovery").toRewardAmount(),
+                            quest = rewards.getJSONObject("quest").toRewardAmount(),
+                            spanishWord = rewards.getJSONObject("spanishWord").toRewardAmount(),
+                            quiz = rewards.getJSONObject("quiz").toRewardAmount(),
+                        ),
                         badge = place.getString("badge"),
                         avatarPose = place.getString("avatarPose"),
                     ).also(Place::validate)
@@ -77,6 +88,7 @@ data class Place(
     val quiz: Quiz,
     val xp: Int,
     val stars: Int,
+    val rewards: PlaceRewards,
     val badge: String,
     val avatarPose: String,
 ) {
@@ -91,9 +103,33 @@ data class Place(
         }
         require(quiz.answers.all(String::isNotBlank)) { "Quiz answers must not be blank" }
         require(xp >= 0 && stars >= 0) { "Place rewards cannot be negative" }
+        require(rewards.totalXp == xp && rewards.totalStars == stars) {
+            "Stage reward totals must match the place XP and stars"
+        }
     }
 }
 
 data class SpanishWord(val word: String, val meaning: String)
-data class Quest(val id: String, val type: String, val prompt: String)
-data class Quiz(val id: String, val question: String, val answers: List<String>, val correctAnswerIndex: Int)
+enum class QuestType { OBSERVATION, SAY_PHRASE, MULTIPLE_CHOICE, PARENT_CHECK }
+data class Quest(val id: String, val type: QuestType, val prompt: String)
+data class Quiz(val id: String, val question: String, val answers: List<String>, val correctAnswerIndex: Int) {
+    fun isCorrect(answerIndex: Int) = answerIndex == correctAnswerIndex
+}
+
+data class RewardAmount(val xp: Int, val stars: Int) {
+    init {
+        require(xp >= 0 && stars >= 0) { "Reward amounts cannot be negative" }
+    }
+}
+
+data class PlaceRewards(
+    val discovery: RewardAmount,
+    val quest: RewardAmount,
+    val spanishWord: RewardAmount,
+    val quiz: RewardAmount,
+) {
+    val totalXp get() = discovery.xp + quest.xp + spanishWord.xp + quiz.xp
+    val totalStars get() = discovery.stars + quest.stars + spanishWord.stars + quiz.stars
+}
+
+private fun JSONObject.toRewardAmount() = RewardAmount(getInt("xp"), getInt("stars"))

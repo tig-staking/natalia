@@ -28,6 +28,12 @@
       },
       "xp": 50,
       "stars": 50,
+      "rewards": {
+        "discovery": { "xp": 10, "stars": 10 },
+        "quest": { "xp": 20, "stars": 20 },
+        "spanishWord": { "xp": 10, "stars": 10 },
+        "quiz": { "xp": 10, "stars": 10 }
+      },
       "badge": "ARCHITEKTONICZNA DETEKTYWKA",
       "avatarPose": "surprised"
     }
