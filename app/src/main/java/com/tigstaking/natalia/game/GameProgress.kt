@@ -70,6 +70,12 @@ enum class PlayerLevel(val title: String, val minXp: Int) {
 
 data class Coordinates(val latitude: Double, val longitude: Double)
 
+sealed interface ProximityResult {
+    data class Inside(val distanceMeters: Double) : ProximityResult
+    data class Outside(val distanceMeters: Double) : ProximityResult
+    data class Uncertain(val distanceMeters: Double, val accuracyMeters: Double) : ProximityResult
+}
+
 object Proximity {
     fun distanceMeters(from: Coordinates, to: Coordinates): Double {
         require(from.latitude in -90.0..90.0 && from.longitude in -180.0..180.0)
@@ -83,6 +89,22 @@ object Proximity {
             kotlin.math.cos(lat1) * kotlin.math.cos(lat2) *
             kotlin.math.sin(deltaLon / 2).let { it * it }).coerceIn(0.0, 1.0)
         return earthRadiusMeters * 2 * kotlin.math.atan2(kotlin.math.sqrt(a), kotlin.math.sqrt(1 - a))
+    }
+
+    fun classify(
+        user: Coordinates,
+        place: Coordinates,
+        radiusMeters: Int,
+        accuracyMeters: Double,
+    ): ProximityResult {
+        require(radiusMeters > 0) { "Radius must be greater than zero" }
+        require(accuracyMeters.isFinite() && accuracyMeters >= 0.0) { "Accuracy must be finite and non-negative" }
+        val distance = distanceMeters(user, place)
+        return when {
+            distance - accuracyMeters > radiusMeters -> ProximityResult.Outside(distance)
+            distance + accuracyMeters <= radiusMeters -> ProximityResult.Inside(distance)
+            else -> ProximityResult.Uncertain(distance, accuracyMeters)
+        }
     }
 
     fun isInside(user: Coordinates, place: Coordinates, radiusMeters: Int): Boolean {
