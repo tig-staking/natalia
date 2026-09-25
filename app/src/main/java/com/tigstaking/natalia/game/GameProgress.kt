@@ -14,6 +14,8 @@ data class LedgerEntry(
     val stars: Int,
 )
 
+data class RewardRequest(val id: String, val cost: Int)
+
 data class GameProgress(
     val xp: Int = 0,
     val stars: Int = 0,
@@ -25,6 +27,7 @@ data class GameProgress(
     val completedWordIds: Set<String> = emptySet(),
     val earnedBadgeIds: Set<String> = emptySet(),
     val redeemedRewardIds: Set<String> = emptySet(),
+    val pendingRewardRequests: Map<String, RewardRequest> = emptyMap(),
 ) {
     fun applyOnce(event: RewardEvent): GameProgress {
         require(event.id.isNotBlank()) { "Reward event id must not be blank" }
@@ -40,11 +43,40 @@ data class GameProgress(
         )
     }
 
+    fun requestRedemption(requestId: String, cost: Int): GameProgress {
+        require(requestId.isNotBlank()) { "Redemption id must not be blank" }
+        require(cost > 0) { "Reward cost must be greater than zero" }
+        if (requestId in redeemedRewardIds) return this
+        pendingRewardRequests[requestId]?.let { existing ->
+            require(existing.cost == cost) { "A pending request with this id has a different cost" }
+            return this
+        }
+        val reservedStars = pendingRewardRequests.values.sumOf { it.cost }
+        require(stars - reservedStars >= cost) { "Not enough unreserved stars" }
+        return copy(pendingRewardRequests = pendingRewardRequests + (requestId to RewardRequest(requestId, cost)))
+    }
+
+    fun approveRedemption(requestId: String): GameProgress {
+        require(requestId.isNotBlank()) { "Redemption id must not be blank" }
+        if (requestId in redeemedRewardIds) {
+            return copy(pendingRewardRequests = pendingRewardRequests - requestId)
+        }
+        val request = requireNotNull(pendingRewardRequests[requestId]) { "No pending request for this reward" }
+        val withoutRequest = copy(pendingRewardRequests = pendingRewardRequests - requestId)
+        return withoutRequest.redeemOnce(request.id, request.cost)
+    }
+
+    fun cancelRedemption(requestId: String): GameProgress {
+        require(requestId.isNotBlank()) { "Redemption id must not be blank" }
+        return copy(pendingRewardRequests = pendingRewardRequests - requestId)
+    }
+
     fun redeemOnce(redemptionId: String, cost: Int): GameProgress {
         require(redemptionId.isNotBlank()) { "Redemption id must not be blank" }
         require(cost > 0) { "Reward cost must be greater than zero" }
         if (redemptionId in redeemedRewardIds) return this
-        require(stars >= cost) { "Not enough stars" }
+        val reservedStars = pendingRewardRequests.values.sumOf { it.cost }
+        require(stars - reservedStars >= cost) { "Not enough unreserved stars" }
         return copy(
             stars = stars - cost,
             redeemedRewardIds = redeemedRewardIds + redemptionId,

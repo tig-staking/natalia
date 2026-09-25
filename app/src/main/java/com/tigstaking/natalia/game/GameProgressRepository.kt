@@ -41,6 +41,57 @@ class GameProgressRepository(private val dataStore: DataStore<Preferences>) {
     suspend fun completeSpanishWord(placeId: String, xp: Int, stars: Int): GameProgress =
         awardStageOnce(RewardEvent("word:$placeId", "SPANISH", xp, stars), completedWordsKey, placeId)
 
+    suspend fun requestRedemptionOnce(requestId: String, cost: Int): Boolean {
+        require(requestId.isNotBlank()) { "Redemption id must not be blank" }
+        require(cost > 0) { "Reward cost must be greater than zero" }
+        var requested = false
+        dataStore.edit { preferences ->
+            val current = decode(preferences)
+            if (requestId in current.redeemedRewardIds) {
+                requested = true
+                return@edit
+            }
+            val existing = current.pendingRewardRequests[requestId]
+            if (existing != null) {
+                requested = existing.cost == cost
+                return@edit
+            }
+            val reservedStars = current.pendingRewardRequests.values.sumOf { it.cost }
+            if (current.stars - reservedStars < cost) return@edit
+            encode(preferences, current.requestRedemption(requestId, cost))
+            requested = true
+        }
+        return requested
+    }
+
+    suspend fun approveRedemption(requestId: String): Boolean {
+        require(requestId.isNotBlank()) { "Redemption id must not be blank" }
+        var approved = false
+        dataStore.edit { preferences ->
+            val current = decode(preferences)
+            if (requestId in current.redeemedRewardIds) {
+                approved = true
+                return@edit
+            }
+            if (requestId !in current.pendingRewardRequests) return@edit
+            encode(preferences, current.approveRedemption(requestId))
+            approved = true
+        }
+        return approved
+    }
+
+    suspend fun cancelRedemption(requestId: String): Boolean {
+        require(requestId.isNotBlank()) { "Redemption id must not be blank" }
+        var cancelled = false
+        dataStore.edit { preferences ->
+            val current = decode(preferences)
+            if (requestId !in current.pendingRewardRequests) return@edit
+            encode(preferences, current.cancelRedemption(requestId))
+            cancelled = true
+        }
+        return cancelled
+    }
+
     suspend fun redeemOnce(redemptionId: String, cost: Int): Boolean {
         require(redemptionId.isNotBlank()) { "Redemption id must not be blank" }
         require(cost > 0) { "Reward cost must be greater than zero" }
@@ -51,7 +102,8 @@ class GameProgressRepository(private val dataStore: DataStore<Preferences>) {
                 redeemed = true
                 return@edit
             }
-            if (current.stars < cost) return@edit
+            val reservedStars = current.pendingRewardRequests.values.sumOf { it.cost }
+            if (current.stars - reservedStars < cost) return@edit
             encode(preferences, current.redeemOnce(redemptionId, cost))
             redeemed = true
         }
@@ -106,6 +158,7 @@ class GameProgressRepository(private val dataStore: DataStore<Preferences>) {
         completedWordIds = prefs[completedWordsKey].orEmpty(),
         earnedBadgeIds = prefs[earnedBadgesKey].orEmpty(),
         redeemedRewardIds = prefs[redeemedRewardsKey].orEmpty(),
+        pendingRewardRequests = decodeRewardRequests(prefs[pendingRewardsKey].orEmpty()),
     )
 
     private fun encode(prefs: MutablePreferences, state: GameProgress) {
@@ -119,6 +172,7 @@ class GameProgressRepository(private val dataStore: DataStore<Preferences>) {
         prefs[completedWordsKey] = state.completedWordIds
         prefs[earnedBadgesKey] = state.earnedBadgeIds
         prefs[redeemedRewardsKey] = state.redeemedRewardIds
+        prefs[pendingRewardsKey] = encodeRewardRequests(state.pendingRewardRequests)
     }
 
     private fun encodeLedger(ledger: List<LedgerEntry>) = JSONArray().apply {
@@ -135,6 +189,21 @@ class GameProgressRepository(private val dataStore: DataStore<Preferences>) {
         }
     }.getOrDefault(emptyList())
 
+    private fun encodeRewardRequests(requests: Map<String, RewardRequest>) = JSONArray().apply {
+        requests.values.sortedBy { it.id }.forEach { request ->
+            put(JSONArray().put(request.id).put(request.cost))
+        }
+    }.toString()
+
+    private fun decodeRewardRequests(value: String): Map<String, RewardRequest> = runCatching {
+        val array = JSONArray(value)
+        (0 until array.length()).associate { index ->
+            val entry = array.getJSONArray(index)
+            val request = RewardRequest(entry.getString(0), entry.getInt(1))
+            request.id to request
+        }
+    }.getOrDefault(emptyMap())
+
     private companion object {
         val xpKey = intPreferencesKey("xp")
         val starsKey = intPreferencesKey("stars")
@@ -146,5 +215,6 @@ class GameProgressRepository(private val dataStore: DataStore<Preferences>) {
         val completedWordsKey = stringSetPreferencesKey("completed_words")
         val earnedBadgesKey = stringSetPreferencesKey("earned_badges")
         val redeemedRewardsKey = stringSetPreferencesKey("redeemed_rewards")
+        val pendingRewardsKey = stringPreferencesKey("pending_rewards")
     }
 }

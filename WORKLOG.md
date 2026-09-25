@@ -18,6 +18,7 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 - GameEngine requires stages in order: discover, quest, Spanish word, quiz, then badge.
 - Progress rules include XP, stars, an idempotent reward ledger, levels, badge markers, reward redemption, and reset.
 - Preferences DataStore persists progress locally.
+- Reward redemption now supports a persistent request/approval flow: requested stars are reserved without being spent, approval spends them once, cancellation releases the reservation, and duplicate actions are idempotent.
 - Foreground one-shot Fused Location Provider checks coarse/fine permission, enabled location providers, and a fresh location. No background location or route history.
 - A Compose instrumentation smoke test launches the app and opens the Sagrada Família check-in screen.
 - GitHub Actions runs unit tests, compiles instrumentation test sources, builds a debug APK, and uploads that APK. Successful APK artifacts are retained for 14 days.
@@ -25,19 +26,17 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 
 ## Verification state
 
-- Last successful full unit-test and debug-APK run: commit `8700c722b6a4892c4ba2701b4b8821092682c7ee`.
+- Green GitHub Actions run for commit `c72ed6131d02cdd7c42d320641e4f0ac96ec10c5`: unit tests, instrumentation test compilation, debug APK build, and artifact upload passed.
 - Previous verified artifact `natalia-debug-apk` (id `10860897629`) expires 2026-10-09.
-- App source and instrumentation test source compiled successfully on commit `254c4cb2b59df82bd3d3ca25dab7e92c3142ab40`; the emulator did not boot.
-- GitHub-hosted runs did not boot the emulator: Ubuntu could not start its x86 image with CPU acceleration, macOS managed image exited at startup, and the direct software-emulator fallback timed out waiting for a device.
-- An attempted shorthand Gradle task name was ambiguous. It is replaced with the explicit `compileDebugAndroidTestSources` task; this verification run is pending.
-- Do not mark emulator verification complete until the smoke test actually passes on a device.
+- The app, unit tests, and instrumentation test sources compile. The instrumentation test itself has not completed on an emulator.
+- GitHub-hosted runners could not boot the emulator in the attempts so far; CI currently avoids emulator startup while keeping the instrumentation test compile check.
 - No on-device GPS test has been run.
 
 ## Known gaps to address
 
 1. Run the Compose smoke test on an Android Studio emulator or a connected Android device; then field-test GPS behavior on a physical phone.
-2. Finish a real Developer Mode: simulate/override location, unlock POI, complete stages, edit stars, force level, redeem reward, reset POI/all, create test POI at current location, and show GPS diagnostics. Current debug shortcut only simulates Sagrada discovery.
-3. Add parent approval and PIN flow. Never store a plain-text PIN. A reward request must wait for approval; successful redemption spends stars only.
+2. Add secure parent authentication with a 4-digit PIN stored as a salted hash using Android Keystore-backed secret material, and connect approval actions to the authenticated parent flow. Do not store a plain-text PIN.
+3. Finish a real Developer Mode: simulate/override location, unlock POI, complete stages, edit stars, force level, redeem reward, reset POI/all, create test POI at current location, and show GPS diagnostics. Current debug shortcut only simulates Sagrada discovery.
 4. Add onboarding, actual map/POI overview, location diagnostics, and recovery paths for permission denied, approximate location, disabled GPS, stale/unavailable fixes.
 5. Add Spanish TextToSpeech using `es-ES`, handling unavailable TTS without crashing.
 6. Add required celebration/avatar/level-up/badge animations after the functional game flow works.
@@ -61,4 +60,4 @@ For local setup on another computer, follow [docs/LOCAL_DEVELOPMENT.md](docs/LOC
 
 ## Progress estimate
 
-Roughly 12% of the full MVP scope. Core data/progress/location rules and the first screen flow are in place, but runtime emulator validation, full Developer/Parent modes, map, onboarding, rewards approval, audio, and animations remain. Re-estimate after each major verified milestone.
+Roughly 14% of the full MVP scope. The ordered engine, persistence, GPS rules, and parent-gated reward accounting are in place; secure parent PIN/UI, runtime emulator validation, full Developer Mode, map, onboarding, audio, and animations remain. Re-estimate after each major verified milestone.

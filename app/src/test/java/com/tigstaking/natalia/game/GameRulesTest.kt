@@ -37,6 +37,37 @@ class GameRulesTest {
     }
 
     @Test
+    fun pendingRewardReservesStarsButDoesNotSpendUntilApproval() {
+        val requested = GameProgress(xp = 80, stars = 120).requestRedemption("ice-cream", 100)
+
+        assertEquals(80, requested.xp)
+        assertEquals(120, requested.stars)
+        assertTrue("ice-cream" in requested.pendingRewardRequests)
+        assertTrue(requested.ledger.isEmpty())
+        assertThrows(IllegalArgumentException::class.java) {
+            requested.redeemOnce("other-reward", 30)
+        }
+
+        val approved = requested.approveRedemption("ice-cream").approveRedemption("ice-cream")
+        assertEquals(80, approved.xp)
+        assertEquals(20, approved.stars)
+        assertTrue("ice-cream" in approved.redeemedRewardIds)
+        assertTrue(approved.pendingRewardRequests.isEmpty())
+        assertEquals(-100, approved.ledger.single().stars)
+    }
+
+    @Test
+    fun cancellingRewardRequestReleasesReservedStars() {
+        val requested = GameProgress(stars = 100)
+            .requestRedemption("ice-cream", 100)
+            .cancelRedemption("ice-cream")
+        val redeemed = requested.redeemOnce("other-reward", 100)
+
+        assertEquals(0, redeemed.stars)
+        assertTrue(redeemed.ledger.single().eventId == "reward:other-reward")
+    }
+
+    @Test
     fun levelsUseConfiguredThresholds() {
         assertEquals(PlayerLevel.EXPLORER, PlayerLevel.forXp(49))
         assertEquals(PlayerLevel.TRACKER, PlayerLevel.forXp(50))

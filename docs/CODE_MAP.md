@@ -16,26 +16,26 @@ MainActivity (Compose screens and user actions)
 - `app/src/main/java/com/tigstaking/natalia/game/CityPackRepository.kt` — Loads the packaged Barcelona City Pack from Android assets.
 - `app/src/main/assets/citypacks/barcelona.json` — Sagrada Família content: coordinates, radius, copy, quest, quiz, rewards, badge, and avatar pose. Content-only changes belong here.
 - `app/src/main/java/com/tigstaking/natalia/game/GameEngine.kt` — Player-facing game rules and ordered stage flow: location check-in, discovery, quest, word, quiz, and badge. Change this when a player action should be allowed, rejected, or rewarded differently.
-- `app/src/main/java/com/tigstaking/natalia/game/GameProgress.kt` — Pure progress models and calculations: XP, stars, reward ledger, levels, distance, and GPS accuracy/geofence classification. Start here for arithmetic or proximity bugs.
-- `app/src/main/java/com/tigstaking/natalia/game/GameProgressRepository.kt` — Preferences DataStore persistence, event idempotency, reward ledger serialization, reward redemption, and reset. Start here for lost or duplicated progress.
+- `app/src/main/java/com/tigstaking/natalia/game/GameProgress.kt` — Pure progress models and calculations: XP, stars, reward ledger, levels, pending parent reward requests, and GPS accuracy/geofence classification. Start here for arithmetic or proximity bugs.
+- `app/src/main/java/com/tigstaking/natalia/game/GameProgressRepository.kt` — Preferences DataStore persistence, event idempotency, reward request and approval state, ledger serialization, reward redemption, and reset. Start here for lost or duplicated progress.
 - `app/src/main/java/com/tigstaking/natalia/game/location/LocationProvider.kt` — Android permission and location-services checks plus fresh Fused Location Provider reading. Start here for permission, GPS availability, cancellation, or fix-accuracy issues.
 
 ## Tests
 
-- `app/src/test/java/com/tigstaking/natalia/game/GameRulesTest.kt` — XP, stars, levels, quiz selection, and proximity/accuracy rules.
+- `app/src/test/java/com/tigstaking/natalia/game/GameRulesTest.kt` — XP, stars, levels, quiz selection, proximity/accuracy, and reward request/reservation rules.
 - `app/src/test/java/com/tigstaking/natalia/game/CityPackTest.kt` — City Pack JSON parse and schema/content validation.
 - `app/src/test/java/com/tigstaking/natalia/game/GameEngineTest.kt` — Ordered Sagrada flow, locked stages, and one-time payouts.
-- `app/src/test/java/com/tigstaking/natalia/game/GameProgressRepositoryTest.kt` — Persistence after repository recreation, ledger, redemption, and reset.
+- `app/src/test/java/com/tigstaking/natalia/game/GameProgressRepositoryTest.kt` — Persistence after repository recreation, reward approval, ledger, redemption, and reset.
 - `app/src/androidTest/java/com/tigstaking/natalia/HomeSmokeTest.kt` — Launches the app on an Android emulator, opens the Sagrada Família screen, and verifies the GPS check-in control.
 
-Add or update the test next to the behavior being changed. GitHub Actions runs unit and emulator smoke tests with the debug APK build.
+Add or update the test next to the behavior being changed. GitHub Actions runs unit tests, compiles the instrumentation test sources, and builds the debug APK. It does not boot the emulator in CI yet.
 
 ## Build and CI
 
 - `app/build.gradle.kts` — Android app SDK levels, JVM target, managed emulator, and app/test dependencies.
 - `build.gradle.kts` — Android Gradle Plugin and Kotlin plugin versions.
 - `gradle/wrapper/gradle-wrapper.properties` — Gradle distribution used on every computer and in CI.
-- `.github/workflows/android.yml` — JDK/Android SDK setup, unit tests, managed-emulator smoke test, debug APK build, and APK artifact upload.
+- `.github/workflows/android.yml` — JDK/Android SDK setup, unit tests, instrumentation test compilation, debug APK build, and APK artifact upload.
 
 ## Where to look for common problems
 
@@ -48,5 +48,6 @@ Add or update the test next to the behavior being changed. GitHub Actions runs u
 | Place unlocks from too far away or GPS is inconclusive | `GameProgress.kt`, `GameEngine.kt`, `LocationProvider.kt`, `GameRulesTest.kt` |
 | Gradle fails before compiling app code | `gradle-wrapper.properties`, root `build.gradle.kts`, `app/build.gradle.kts`, then the Actions log |
 | App launch, navigation, or Compose semantics fail on emulator | `MainActivity.kt`, `HomeSmokeTest.kt`, then the Actions instrumentation logs |
+| Parent reward approval or star reservation is wrong | `GameProgress.kt`, `GameProgressRepository.kt`, `GameProgressRepositoryTest.kt` |
 
 When behavior crosses layers, update the relevant tests and this map if file ownership changes. Do not put secrets or computer-specific paths in this document.
