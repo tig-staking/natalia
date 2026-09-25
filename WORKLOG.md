@@ -68,4 +68,4 @@ For local setup on another computer, follow [docs/LOCAL_DEVELOPMENT.md](docs/LOC
 
 ## Progress estimate
 
-Roughly 18% of the full MVP scope. The ordered engine, persistence, GPS rules, parent-gated reward accounting, device-local PIN-gated approval screen, GPS diagnostics, and core debug progression controls including geofence scenarios are implemented and CI builds successfully. Runtime emulator/GPS validation, single-POI reset and coordinate override tools, map, onboarding, audio, and animations remain. The current-location test POI is awaiting CI. Re-estimate after each major verified milestone.
+Roughly 18% of the full MVP scope. The ordered engine, persistence, GPS rules, parent-gated reward accounting, device-local PIN-gated approval screen, GPS diagnostics, core debug progression controls, geofence scenarios, and temporary current-location test POI are implemented and CI builds successfully. Runtime emulator/GPS validation, single-POI reset and coordinate override tools, map, onboarding, audio, and animations remain. Re-estimate after each major verified milestone.
