@@ -26,15 +26,16 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 
 ## Verification state
 
-- Green GitHub Actions run for commit `e7525e5fe1b5bbc100c2b3353d3fecc6cd547ecc`: unit tests, instrumentation test compilation, debug APK build, and artifact upload passed.
-- The run uploaded artifact `natalia-debug-apk` (id `10864602178`), available until 2026-10-09.
-- Tests verify reward request reservation, no spending before approval, idempotent approval, cancellation, ledger entries, and persistence behavior. The reward request test now checks the DataStore serialized flow without creating two live stores for the same file.
+- Last successful code verification: GitHub Actions run for commit `e7525e5fe1b5bbc100c2b3353d3fecc6cd547ecc`: unit tests, instrumentation test compilation, debug APK build, and artifact upload passed.
+- APK artifact `natalia-debug-apk` (id `10864602178`) is available until 2026-10-09.
+- Tests cover reward request reservation, no spending before approval, idempotent approval, cancellation, ledger entries, and persistence after repository recreation, including pending requests.
+- The additional persistence assertion is being added to the existing repository recreation test after the isolated request test passed.
 - The emulator smoke test has compiled but has not run on a device. GitHub-hosted runs could not boot the configured emulator; CI avoids emulator startup while keeping the instrumentation compile check.
 - No on-device GPS test has been run.
 
 ## Known gaps to address
 
-1. Run the Compose smoke test on an Android Studio emulator or connected Android device; then field-test GPS behavior on a physical phone.
+1. Verify the updated reward request persistence assertion and keep CI green; run the Compose smoke test on an Android Studio emulator or connected Android device, then field-test GPS behavior on a physical phone.
 2. Add secure parent authentication with a 4-digit PIN stored as a salted hash using Android Keystore-backed secret material, and connect approval actions to the authenticated parent flow. Do not store a plain-text PIN.
 3. Finish a real Developer Mode: simulate/override location, unlock POI, complete stages, edit stars, force level, redeem reward, reset POI/all, create test POI at current location, and show GPS diagnostics. Current debug shortcut only simulates Sagrada discovery.
 4. Add onboarding, actual map/POI overview, location diagnostics, and recovery paths for permission denied, approximate location, disabled GPS, stale/unavailable fixes.

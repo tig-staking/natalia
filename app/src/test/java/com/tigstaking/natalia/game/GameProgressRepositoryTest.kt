@@ -30,6 +30,7 @@ class GameProgressRepositoryTest {
             firstRepository.completeQuest("sagrada-quest", xp = 20, stars = 20)
             assertFalse(firstRepository.redeemOnce("ice-cream", cost = 100))
             assertTrue(firstRepository.redeemOnce("souvenir", cost = 15))
+            assertTrue(firstRepository.requestRedemptionOnce("pending-ice-cream", cost = 10))
 
             firstScope?.cancel()
             firstScope = null
@@ -42,6 +43,7 @@ class GameProgressRepositoryTest {
             assertTrue("sagrada-quest" in restored.completedQuestIds)
             assertEquals(3, restored.ledger.size)
             assertEquals(-15, restored.ledger.last().stars)
+            assertEquals(10, restored.pendingRewardRequests["pending-ice-cream"]?.cost)
 
             secondRepository.reset()
             val reset = secondRepository.progress.first()
@@ -58,7 +60,7 @@ class GameProgressRepositoryTest {
     }
 
     @Test
-    fun rewardRequestPersistsAndOnlyApprovalSpendsStars() = runBlocking {
+    fun rewardRequestIsIdempotentAndOnlyApprovalSpendsStars() = runBlocking {
         val directory = Files.createTempDirectory("natalia-reward-request-test").toFile()
         val file = File(directory, "game_progress.preferences_pb")
         val (repository, scope) = newRepository(file)
