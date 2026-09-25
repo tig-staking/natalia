@@ -162,8 +162,10 @@ private fun NataliaNaTropieApp() {
                             DeveloperPanel(
                                 place = place,
                                 engine = engine,
+                                progress = progress,
+                                progressRepository = progressRepository,
                                 onMessage = { message = it },
-                                onOpen = { screen = nextGameScreen(progress, place) },
+                                onOpen = { updated -> screen = nextGameScreen(updated, place) },
                             )
                         }
                     }
@@ -338,21 +340,66 @@ private fun nextGameScreen(progress: GameProgress, place: Place): GameScreen = w
 private fun DeveloperPanel(
     place: Place,
     engine: GameEngine,
+    progress: GameProgress,
+    progressRepository: GameProgressRepository,
     onMessage: (String) -> Unit,
-    onOpen: () -> Unit,
+    onOpen: (GameProgress) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     var expanded by remember { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedButton(onClick = { expanded = !expanded }) { Text("Developer mode") }
         if (expanded) {
-            Text("Testowy skrót do sprawdzenia przepływu gry.")
+            Text("Narzędzia testowe. Nie są dostępne w wydaniu produkcyjnym.")
+            val scope = rememberCoroutineScope()
+            val nextStageLabel = when {
+                place.id !in progress.discoveredPlaceIds -> "ODKRYCIE"
+                place.quest.id !in progress.completedQuestIds -> "MISJA"
+                place.id !in progress.completedWordIds -> "SŁÓWKO"
+                place.quiz.id !in progress.completedQuizIds -> "QUIZ I ODZNAKA"
+                else -> "GRA UKOŃCZONA"
+            }
+            OutlinedButton(
+                enabled = nextStageLabel != "GRA UKOŃCZONA",
+                onClick = {
+                    scope.launch {
+                        val updated = when (nextStageLabel) {
+                            "ODKRYCIE" -> engine.simulateDiscovery(place)
+                            "MISJA" -> engine.completeQuest(place)
+                            "SŁÓWKO" -> engine.learnSpanishWord(place)
+                            "QUIZ I ODZNAKA" -> {
+                                engine.answerQuiz(place, place.quiz.correctAnswerIndex)
+                                engine.earnBadge(place)
+                            }
+                            else -> progress
+                        }
+                        onMessage("Tryb deweloperski: ukończono etap $nextStageLabel.")
+                        onOpen(updated)
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("ZALICZ NASTĘPNY ETAP: $nextStageLabel") }
+            OutlinedButton(
+                onClick = {
+                    scope.launch {
+                        progressRepository.awardOnce(
+                            com.tigstaking.natalia.game.RewardEvent(
+                                id = "debug-stars:${UUID.randomUUID()}",
+                                source = "DEBUG",
+                                stars = 10,
+                            ),
+                        )
+                        onMessage("Tryb deweloperski: dodano 10 ★.")
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("DODAJ 10 ★ (DEBUG)") }
             Button(
                 onClick = {
                     scope.launch {
-                        engine.simulateDiscovery(place)
+                        val updated = engine.simulateDiscovery(place)
                         onMessage("Test: Sagrada Família odkryta.")
-                        onOpen()
+                        onOpen(updated)
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),

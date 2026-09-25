@@ -11,7 +11,7 @@ MainActivity (Compose screens and user actions)
         └── FusedLocationProvider → accurate foreground GPS fix
 ```
 
-- `app/src/main/java/com/tigstaking/natalia/MainActivity.kt` — Compose UI and wiring for Home, place check-in, quest, Spanish word, quiz, passport, child reward requests, and the PIN-gated parent approval dialog. Debug-only Developer Mode entry point is here. Screen or user-action behavior starts here.
+- `app/src/main/java/com/tigstaking/natalia/MainActivity.kt` — Compose UI and wiring for Home, place check-in, quest, Spanish word, quiz, passport, child reward requests, and the PIN-gated parent approval dialog. Debug-only Developer Mode entry point is here; it advances ordered game stages and adds test stars. Screen or user-action behavior starts here.
 - `app/src/main/java/com/tigstaking/natalia/security/ParentPinStore.kt` — Device-local parent PIN setup and verification using Android Keystore HMAC plus a short persisted lockout. Inspect this for PIN setup, failed-attempt handling, or device restore/reinstall behavior.
 - `app/src/main/java/com/tigstaking/natalia/game/CityPack.kt` — City Pack data classes, JSON parsing, and validation rules. Change this when the content schema or its validation changes.
 - `app/src/main/java/com/tigstaking/natalia/game/CityPackRepository.kt` — Loads the packaged Barcelona City Pack from Android assets.
