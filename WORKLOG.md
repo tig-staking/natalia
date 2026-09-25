@@ -20,21 +20,21 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 - Preferences DataStore persists progress locally.
 - Foreground one-shot Fused Location Provider checks coarse/fine permission, enabled location providers, and a fresh location. No background location or route history.
 - Check-in considers reported GPS accuracy. It confirms only when the whole accuracy circle fits inside the geofence; an ambiguous fix asks for another reading.
-- GitHub Actions runs unit tests, builds a debug APK, and is being extended to install the app on a managed API 35 emulator and run a Compose smoke test. This commit's result is pending.
-- Successful CI runs upload `natalia-debug-apk` for 14 days.
+- A Compose instrumentation smoke test now launches the app and opens the Sagrada Família check-in screen on a managed API 35 emulator.
+- GitHub Actions runs unit tests, the managed-emulator smoke test, and a debug APK build. The APK artifact is retained for 14 days.
 - [`docs/CODE_MAP.md`](docs/CODE_MAP.md) describes file ownership and where to look for common problems.
 
 ## Verification state
 
-- Green GitHub Actions run for code commit `66095d1f95a0114ddaa588ea8cb17fb346639c24`: unit tests and debug APK build passed.
-- The run uploaded debug APK artifact `natalia-debug-apk` (artifact id `10860897629`), available until 2026-10-09.
-- Tests cover core rules, GPS accuracy boundaries, City Pack JSON parsing/validation, ordered game stages, idempotent payouts, DataStore persistence after repository recreation, reward redemption, ledger, and reset.
-- The app has not yet passed a managed-emulator launch/navigation test. No on-device GPS test has been run.
-- A docs-only commit's CI is still running; check it before drawing a line against the emulator-test commit.
+- Last successful full unit-test and debug-APK run: commit `8700c722b6a4892c4ba2701b4b8821092682c7ee`.
+- Previous verified artifact `natalia-debug-apk` (id `10860897629`) expires 2026-10-09.
+- On commit `c4243a781a3b270281f3c742da328a6ba94fa19d`, app compilation and unit tests passed, but instrumentation compilation found an invalid test import and the Ubuntu runner could not start the x86 emulator without CPU acceleration.
+- Removed the invalid import and moved CI to a macOS runner. The new Actions run is pending; do not mark emulator verification complete until it passes.
+- The smoke test checks app launch and navigation to the Sagrada check-in screen. It does not test a real GPS fix; a physical-device test is still required.
 
 ## Known gaps to address
 
-1. Verify the managed-emulator smoke test and fix any setup or runtime failures. Then ask the owner to field-test GPS and device behavior on a physical phone.
+1. Verify the macOS managed-emulator smoke test and fix any remaining setup or runtime failures. Then field-test GPS and device behavior on a physical phone.
 2. Finish a real Developer Mode: simulate/override location, unlock POI, complete stages, edit stars, force level, redeem reward, reset POI/all, create test POI at current location, and show GPS diagnostics. Current debug shortcut only simulates Sagrada discovery.
 3. Add parent approval and PIN flow. Never store a plain-text PIN. A reward request must wait for approval; successful redemption spends stars only.
 4. Add onboarding, actual map/POI overview, location diagnostics, and recovery paths for permission denied, approximate location, disabled GPS, stale/unavailable fixes.

@@ -9,4 +9,4 @@ The Android smoke test launches `MainActivity` on a managed Pixel 2 emulator (AP
 
 The unit tests cover reward accounting, star redemption, level thresholds, GPS proximity and accuracy, City Pack parsing, ordered game stages, and persisted progress. The emulator smoke test does not verify a real GPS fix; physical-device location behavior still needs a field test.
 
-For local emulator testing, install Android SDK Platform 35 and create an API 35 Google Play system image compatible with the managed device. Use Android Studio's bundled JDK (JDK 17 or newer). See [Local development](LOCAL_DEVELOPMENT.md).
+The first Ubuntu hosted-runner attempt built the app and passed unit tests but could not start the x86 emulator because CPU hardware acceleration was unavailable. CI now uses a macOS hosted runner for the managed-emulator test. For local testing, install Android SDK Platform 35 and use Android Studio's bundled JDK (JDK 17 or newer). See [Local development](LOCAL_DEVELOPMENT.md).
