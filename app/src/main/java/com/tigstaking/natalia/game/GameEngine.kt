@@ -1,5 +1,7 @@
 package com.tigstaking.natalia.game
 
+import kotlinx.coroutines.flow.first
+
 class GameEngine(private val progress: GameProgressRepository) {
     suspend fun checkIn(
         place: Place,
@@ -32,19 +34,31 @@ class GameEngine(private val progress: GameProgressRepository) {
         stars = place.rewards.discovery.stars,
     )
 
-    suspend fun completeQuest(place: Place) = progress.completeQuest(
-        questId = place.quest.id,
-        xp = place.rewards.quest.xp,
-        stars = place.rewards.quest.stars,
-    )
+    suspend fun completeQuest(place: Place): GameProgress {
+        requireDiscovered(place)
+        return progress.completeQuest(
+            questId = place.quest.id,
+            xp = place.rewards.quest.xp,
+            stars = place.rewards.quest.stars,
+        )
+    }
 
-    suspend fun learnSpanishWord(place: Place) = progress.completeSpanishWord(
-        placeId = place.id,
-        xp = place.rewards.spanishWord.xp,
-        stars = place.rewards.spanishWord.stars,
-    )
+    suspend fun learnSpanishWord(place: Place): GameProgress {
+        val state = progress.progress.first()
+        check(place.id in state.discoveredPlaceIds) { "Discover this place before learning its word" }
+        check(place.quest.id in state.completedQuestIds) { "Complete the quest before learning its word" }
+        return progress.completeSpanishWord(
+            placeId = place.id,
+            xp = place.rewards.spanishWord.xp,
+            stars = place.rewards.spanishWord.stars,
+        )
+    }
 
     suspend fun answerQuiz(place: Place, answerIndex: Int): QuizAnswerResult {
+        val state = progress.progress.first()
+        check(place.id in state.discoveredPlaceIds) { "Discover this place before starting its quiz" }
+        check(place.quest.id in state.completedQuestIds) { "Complete the quest before starting its quiz" }
+        check(place.id in state.completedWordIds) { "Learn the word before starting the quiz" }
         if (answerIndex !in place.quiz.answers.indices || !place.quiz.isCorrect(answerIndex)) {
             return QuizAnswerResult.TryAgain(correctAnswerIndex = place.quiz.correctAnswerIndex)
         }
@@ -55,7 +69,20 @@ class GameEngine(private val progress: GameProgressRepository) {
         ))
     }
 
-    suspend fun earnBadge(place: Place) = progress.markBadgeEarned("badge:${place.id}")
+    suspend fun earnBadge(place: Place): GameProgress {
+        val state = progress.progress.first()
+        check(place.id in state.discoveredPlaceIds) { "Discover this place before earning its badge" }
+        check(place.quest.id in state.completedQuestIds) { "Complete the quest before earning its badge" }
+        check(place.id in state.completedWordIds) { "Learn the word before earning its badge" }
+        check(place.quiz.id in state.completedQuizIds) { "Complete the quiz before earning its badge" }
+        progress.markBadgeEarned("badge:${place.id}")
+        return progress.progress.first()
+    }
+
+    private suspend fun requireDiscovered(place: Place) {
+        val state = progress.progress.first()
+        check(place.id in state.discoveredPlaceIds) { "Discover this place before starting its quest" }
+    }
 }
 
 sealed interface QuizAnswerResult {
