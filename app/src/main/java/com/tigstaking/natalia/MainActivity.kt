@@ -16,8 +16,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.tigstaking.natalia.game.GameProgress
+import com.tigstaking.natalia.game.GameProgressRepository
+import com.tigstaking.natalia.game.PlayerLevel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,6 +35,11 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun NataliaNaTropieApp() {
+    val context = LocalContext.current
+    val progressRepository = remember(context) { GameProgressRepository(context) }
+    val progress by progressRepository.progress.collectAsState(initial = GameProgress())
+    val level = PlayerLevel.forXp(progress.xp)
+
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             Column(
@@ -40,9 +52,9 @@ private fun NataliaNaTropieApp() {
                 Card(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(20.dp)) {
                         Text("Cześć, Natalia!", style = MaterialTheme.typography.titleLarge)
-                        Text("ODKRYWCZYNI · Poziom 1")
+                        Text("${level.title} · Poziom ${PlayerLevel.entries.indexOf(level) + 1}")
                         Spacer(Modifier.height(8.dp))
-                        Text("0 XP     ★ 0")
+                        Text("${progress.xp} XP     ★ ${progress.stars}")
                     }
                 }
                 Spacer(Modifier.height(20.dp))

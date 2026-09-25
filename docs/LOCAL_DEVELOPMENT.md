@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Android Studio with Android SDK Platform 35 and a compatible JDK (Android Studio's bundled JDK is recommended).
+- Android Studio with Android SDK Platform 35 and JDK 17 or newer (Android Studio's bundled JDK is recommended).
 - Git.
 - A device or emulator running Android 8.0 (API 26) or newer.
 

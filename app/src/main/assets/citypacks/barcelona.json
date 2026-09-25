@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "barcelona",
+  "name": "Barcelona",
+  "country": "ES",
+  "mapCenter": { "latitude": 41.4036, "longitude": 2.1744 },
+  "defaultZoom": 15.0,
+  "places": [
+    {
+      "id": "sagrada-familia",
+      "name": "Sagrada Família",
+      "latitude": 41.4036,
+      "longitude": 2.1744,
+      "geofenceRadiusMeters": 120,
+      "intro": "Natalia, trafiłaś do jednego z najbardziej niezwykłych miejsc Barcelony!",
+      "fact": "Antoni Gaudí poświęcił projektowi bazyliki ponad 40 lat swojego życia.",
+      "spanishWord": { "word": "torre", "meaning": "wieża" },
+      "quest": {
+        "id": "sagrada-observation",
+        "type": "OBSERVATION",
+        "prompt": "Rozejrzyj się i znajdź element, który przypomina Ci coś z natury."
+      },
+      "quiz": {
+        "id": "sagrada-quiz",
+        "question": "Co znaczy po hiszpańsku «torre»?",
+        "answers": ["wieża", "ulica", "morze"],
+        "correctAnswerIndex": 0
+      },
+      "xp": 50,
+      "stars": 50,
+      "badge": "ARCHITEKTONICZNA DETEKTYWKA",
+      "avatarPose": "surprised"
+    }
+  ]
+}

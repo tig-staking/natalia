@@ -1,6 +1,16 @@
 # Architecture
 
-The Android app lives in `app/`. The first increment establishes a Compose application shell and keeps machine-specific Android SDK configuration in the ignored `local.properties` file. Game rules and City Pack loading will be added as separate layers in subsequent increments, so screens do not own game state or hardcode city content.
+The Android app lives in `app/`. Compose screens are presentation only; game rules live under `app/src/main/java/com/tigstaking/natalia/game/` and city content lives in `app/src/main/assets/citypacks/`.
+
+## Current engine foundation
+
+- `CityPack` parses versioned city/place data, starting with one Barcelona place.
+- `GameProgress` applies XP/star events only once and rejects XP spending or negative star balances.
+- `GameProgressRepository` stores progress locally with Preferences DataStore and records an append-only reward ledger.
+- `Proximity` calculates straight-line distance in meters and checks a place radius.
+- `PlayerLevel` maps XP to the four levels in the product spec.
+
+Progress is local to this installation and contains no location history. Discovery, quest, quiz and reward event IDs must be stable so duplicate callbacks cannot pay out twice.
 
 ## Cross-machine source of truth
 
