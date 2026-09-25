@@ -26,6 +26,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -50,6 +51,8 @@ import com.tigstaking.natalia.game.PlaceCheckInResult
 import com.tigstaking.natalia.game.PlayerLevel
 import com.tigstaking.natalia.game.QuizAnswerResult
 import com.tigstaking.natalia.game.location.FusedLocationProvider
+import com.tigstaking.natalia.game.speech.SpanishSpeechController
+import com.tigstaking.natalia.game.speech.SpanishSpeechStatus
 import com.tigstaking.natalia.game.location.LocationPermissionRequiredException
 import com.tigstaking.natalia.game.location.LocationServicesDisabledException
 import com.tigstaking.natalia.game.location.CurrentLocationUnavailableException
@@ -74,6 +77,9 @@ private fun NataliaNaTropieApp() {
     val engine = remember(progressRepository) { GameEngine(progressRepository) }
     var place by remember(context) { mutableStateOf(CityPackRepository(context).loadBarcelona().places.first()) }
     val locationProvider = remember(context) { FusedLocationProvider(context) }
+    val spanishSpeech = remember(context) { SpanishSpeechController(context) }
+    val speechStatus by spanishSpeech.status.collectAsState()
+    DisposableEffect(spanishSpeech) { onDispose { spanishSpeech.close() } }
     val progress by progressRepository.progress.collectAsState(initial = GameProgress())
     val scope = rememberCoroutineScope()
     var screen by remember { mutableStateOf(GameScreen.HOME) }
@@ -267,6 +273,18 @@ private fun NataliaNaTropieApp() {
                     GameScreen.WORD -> {
                         Text("SŁÓWKO PO HISZPAŃSKU", style = MaterialTheme.typography.titleLarge)
                         Text("${place.spanishWord.word} — ${place.spanishWord.meaning}", style = MaterialTheme.typography.headlineSmall)
+                        when (val status = speechStatus) {
+                            SpanishSpeechStatus.Loading -> Text("Przygotowuję wymowę…")
+                            SpanishSpeechStatus.Ready -> OutlinedButton(
+                                onClick = {
+                                    if (!spanishSpeech.speak(place.spanishWord.word)) {
+                                        message = "Nie udało się odtworzyć wymowy."
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                            ) { Text("ODSŁUCHAJ WYMOWĘ (ES-ES)") }
+                            is SpanishSpeechStatus.Unavailable -> Text(status.reason)
+                        }
                         Button(
                             onClick = {
                                 scope.launch {

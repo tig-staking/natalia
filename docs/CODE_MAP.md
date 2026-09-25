@@ -20,6 +20,7 @@ MainActivity (Compose screens and user actions)
 - `app/src/main/java/com/tigstaking/natalia/game/GameProgress.kt` — Pure progress models and calculations: XP, stars, reward ledger, levels, pending parent reward requests, per-POI completion reset with payout idempotency retained, and GPS accuracy/geofence classification. Start here for arithmetic or proximity bugs.
 - `app/src/main/java/com/tigstaking/natalia/game/GameProgressRepository.kt` — Preferences DataStore persistence, event idempotency, reward request and approval state, ledger serialization, reward redemption, full reset, and per-POI reset. Start here for lost or duplicated progress.
 - `app/src/main/java/com/tigstaking/natalia/game/location/LocationProvider.kt` — Android permission and location-services checks plus fresh Fused Location Provider reading. Start here for permission, GPS availability, cancellation, or fix-accuracy issues.
+- `app/src/main/java/com/tigstaking/natalia/game/speech/SpanishSpeechController.kt` — Android TextToSpeech lifecycle, `es-ES` availability, playback, and unavailable handling. Start here for voice/language/audio problems.
 
 ## Tests
 

@@ -23,6 +23,7 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 - Parent PIN is configured on first use, checked as a keyed HMAC using a non-exportable Android Keystore key, and protected by a 30-second lockout after five failed attempts. The PIN itself is not persisted. The PIN credential is device-local; a new device or reinstall requires setup again.
 - Debug-only Developer Mode can advance one game stage at a time, add test stars, force the next level, spend test stars, reset one POI or all progress with confirmation, inspect permission/provider/fresh-fix GPS diagnostics, run inside/outside/low-accuracy simulated check-ins through `GameEngine.checkIn`, enter arbitrary validated coordinates/accuracy for a check-in simulation, and create a temporary test POI at the current GPS position. A single-POI reset clears completion markers but preserves the reward ledger/event IDs to prevent farming rewards by replay.
 - Check-in errors for missing permission, disabled location services, and unavailable fresh location are shown as actionable Polish messages.
+- The Spanish word stage can speak its word with the platform `es-ES` voice. The UI handles a missing engine/voice and releases TTS when the app screen is disposed.
 - Foreground one-shot Fused Location Provider checks coarse/fine permission, enabled location providers, and a fresh location. No background location or route history.
 - A Compose instrumentation smoke test launches the app and opens the Sagrada Família check-in screen.
 - GitHub Actions runs unit tests, compiles instrumentation test sources, builds a debug APK, and uploads that APK. Successful APK artifacts are retained for 14 days.
@@ -39,7 +40,8 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 - Tests cover reward request reservation, no spending before approval, idempotent approval, cancellation, ledger entries, and persistence of pending requests after repository recreation.
 - The emulator smoke test has compiled but has not run on a device. GitHub-hosted runs could not boot the configured emulator; CI avoids emulator startup while keeping the instrumentation compile check.
 - No on-device GPS test has been run.
-- The per-POI reset is the current code change and is awaiting CI.
+- Per-POI reset commit `eb2051888fd0edca324609b9fc8a5af68a644cb0` passed GitHub Actions run [36168049429](https://github.com/tig-staking/natalia/actions/runs/36168049429); APK artifact `10879655186` is available until 2026-10-09.
+- Spanish TTS is the current code change and awaits CI; no on-device TTS playback has been checked.
 
 ## Known gaps to address
 
@@ -47,7 +49,7 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 2. Verify the new parent PIN and approval flow on a device. Add focused coverage for PIN lockout and approval UI. The credential is intentionally per-device; parent PIN setup must be repeated after installing on another device.
 3. Per-POI reset is implemented. Debug builds can create an in-memory test POI at the current GPS location, simulate inside/outside/low-accuracy check-ins, enter custom coordinates and accuracy, advance ordered stages, add stars, force the next level, spend test stars, reset one POI or all progress with confirmation, and inspect GPS permissions, providers, and fresh-fix accuracy/age. Single-POI reset keeps paid rewards and their event IDs so replay cannot farm XP/stars.
 4. Add onboarding and an actual map/POI overview. Exercise recovery paths for permission denied, approximate location, disabled GPS, and stale/unavailable fixes on real devices.
-5. Add Spanish TextToSpeech using `es-ES`, handling unavailable TTS without crashing.
+5. Confirm installed `es-ES` voice and audio playback on a phone or emulator; the app handles missing TTS/voice.
 6. Add required celebration/avatar/level-up/badge animations after the functional game flow works.
 7. Keep documentation aligned with the real build and test commands. Continue to keep only Sagrada Família in the City Pack until the engine passes the MVP flow.
 
@@ -69,4 +71,4 @@ For local setup on another computer, follow [docs/LOCAL_DEVELOPMENT.md](docs/LOC
 
 ## Progress estimate
 
-Roughly 20% of the full MVP scope. The ordered engine, persistence, GPS rules, parent-gated reward accounting, device-local PIN-gated approval screen, GPS diagnostics, geofence scenarios, custom coordinate simulation, temporary current-location test POI, and anti-farming per-POI reset are implemented. Runtime emulator/GPS validation, map, onboarding, audio, and animations remain. The per-POI reset change awaits CI. Re-estimate after each major verified milestone.
+Roughly 21% of the full MVP scope. The ordered engine, persistence, GPS rules, parent-gated reward accounting, device-local PIN-gated approval screen, GPS diagnostics, geofence scenarios, custom coordinate simulation, temporary current-location test POI, anti-farming per-POI reset, and Spanish TTS path are implemented. Runtime emulator/GPS/TTS validation, map, onboarding, and animations remain. TTS awaits CI. Re-estimate after each major verified milestone.
