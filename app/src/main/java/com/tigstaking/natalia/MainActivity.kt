@@ -424,6 +424,7 @@ private fun DeveloperPanel(
     val scope = rememberCoroutineScope()
     var expanded by remember { mutableStateOf(false) }
     var confirmReset by remember { mutableStateOf(false) }
+    var confirmPlaceReset by remember { mutableStateOf(false) }
     var latitudeInput by remember(place.id) { mutableStateOf(place.coordinates.latitude.toString()) }
     var longitudeInput by remember(place.id) { mutableStateOf(place.coordinates.longitude.toString()) }
     var accuracyInput by remember(place.id) { mutableStateOf("10") }
@@ -584,8 +585,34 @@ private fun DeveloperPanel(
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("WYDAJ 10 ★ (DEBUG)") }
 
+            OutlinedButton(onClick = { confirmPlaceReset = true }, modifier = Modifier.fillMaxWidth()) {
+                Text("RESETUJ TEN PUNKT (DEBUG)")
+            }
+            if (confirmPlaceReset) {
+                AlertDialog(
+                    onDismissRequest = { confirmPlaceReset = false },
+                    title = { Text("Wyczyścić postęp tego punktu?") },
+                    text = {
+                        Text("Etapy i odznaka zostaną zresetowane. Zdobyte XP, gwiazdki i historia nagród zostają; ponowne przejście nie przyzna ich drugi raz.")
+                    },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            scope.launch {
+                                val updated = engine.resetPlace(place)
+                                confirmPlaceReset = false
+                                onMessage("Wyczyszczono etapy punktu. Historia nagród została zachowana.")
+                                onOpen(updated)
+                            }
+                        }) { Text("RESETUJ PUNKT") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { confirmPlaceReset = false }) { Text("ANULUJ") }
+                    },
+                )
+            }
+
             OutlinedButton(onClick = { confirmReset = true }, modifier = Modifier.fillMaxWidth()) {
-                Text("RESETUJ POSTĘP (DEBUG)")
+                Text("RESETUJ CAŁY POSTĘP (DEBUG)")
             }
             if (confirmReset) {
                 AlertDialog(

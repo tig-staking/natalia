@@ -119,6 +119,19 @@ class GameProgressRepository(private val dataStore: DataStore<Preferences>) {
         dataStore.edit { it.clear() }
     }
 
+    suspend fun resetPlace(place: Place): GameProgress {
+        var updated = GameProgress()
+        dataStore.edit { preferences ->
+            updated = decode(preferences).resetPlace(
+                placeId = place.id,
+                questId = place.quest.id,
+                quizId = place.quiz.id,
+            )
+            encode(preferences, updated)
+        }
+        return updated
+    }
+
     private suspend fun updateSet(key: Preferences.Key<Set<String>>, id: String) {
         require(id.isNotBlank()) { "Progress id must not be blank" }
         dataStore.edit { prefs -> prefs[key] = prefs[key].orEmpty() + id }

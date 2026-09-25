@@ -17,8 +17,8 @@ MainActivity (Compose screens and user actions)
 - `app/src/main/java/com/tigstaking/natalia/game/CityPackRepository.kt` — Loads the packaged Barcelona City Pack from Android assets.
 - `app/src/main/assets/citypacks/barcelona.json` — Sagrada Família content: coordinates, radius, copy, quest, quiz, rewards, badge, and avatar pose. Content-only changes belong here.
 - `app/src/main/java/com/tigstaking/natalia/game/GameEngine.kt` — Player-facing game rules and ordered stage flow: location check-in, discovery, quest, word, quiz, and badge. Change this when a player action should be allowed, rejected, or rewarded differently.
-- `app/src/main/java/com/tigstaking/natalia/game/GameProgress.kt` — Pure progress models and calculations: XP, stars, reward ledger, levels, pending parent reward requests, and GPS accuracy/geofence classification. Start here for arithmetic or proximity bugs.
-- `app/src/main/java/com/tigstaking/natalia/game/GameProgressRepository.kt` — Preferences DataStore persistence, event idempotency, reward request and approval state, ledger serialization, reward redemption, and reset. Start here for lost or duplicated progress.
+- `app/src/main/java/com/tigstaking/natalia/game/GameProgress.kt` — Pure progress models and calculations: XP, stars, reward ledger, levels, pending parent reward requests, per-POI completion reset with payout idempotency retained, and GPS accuracy/geofence classification. Start here for arithmetic or proximity bugs.
+- `app/src/main/java/com/tigstaking/natalia/game/GameProgressRepository.kt` — Preferences DataStore persistence, event idempotency, reward request and approval state, ledger serialization, reward redemption, full reset, and per-POI reset. Start here for lost or duplicated progress.
 - `app/src/main/java/com/tigstaking/natalia/game/location/LocationProvider.kt` — Android permission and location-services checks plus fresh Fused Location Provider reading. Start here for permission, GPS availability, cancellation, or fix-accuracy issues.
 
 ## Tests
@@ -51,6 +51,7 @@ Add or update the test next to the behavior being changed. GitHub Actions runs u
 | Gradle fails before compiling app code | `gradle-wrapper.properties`, root `build.gradle.kts`, `app/build.gradle.kts`, then the Actions log |
 | App launch, navigation, or Compose semantics fail on emulator | `MainActivity.kt`, `HomeSmokeTest.kt`, then the Actions instrumentation logs |
 | Parent reward approval or star reservation is wrong | `GameProgress.kt`, `GameProgressRepository.kt`, `GameProgressRepositoryTest.kt`, `MainActivity.kt` |
+| Per-POI reset removes unrelated state or allows repeated payouts | `GameProgress.kt`, `GameProgressRepository.kt`, `GameEngine.kt`, `MainActivity.kt` |
 | Parent PIN setup, verification, or lockout is wrong | `ParentPinStore.kt`, then the parent dialog in `MainActivity.kt` |
 
 When behavior crosses layers, update the relevant tests and this map if file ownership changes. Do not put secrets or computer-specific paths in this document.

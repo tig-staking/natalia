@@ -71,6 +71,23 @@ data class GameProgress(
         return copy(pendingRewardRequests = pendingRewardRequests - requestId)
     }
 
+    /**
+     * Clears this place's completion markers but retains its reward ledger and event ids.
+     * That lets the player replay the flow without farming the same stage rewards again.
+     */
+    fun resetPlace(placeId: String, questId: String, quizId: String): GameProgress {
+        require(placeId.isNotBlank() && questId.isNotBlank() && quizId.isNotBlank()) {
+            "Place, quest, and quiz ids must not be blank"
+        }
+        return copy(
+            discoveredPlaceIds = discoveredPlaceIds - placeId,
+            completedQuestIds = completedQuestIds - questId,
+            completedQuizIds = completedQuizIds - quizId,
+            completedWordIds = completedWordIds - placeId,
+            earnedBadgeIds = earnedBadgeIds - "badge:$placeId",
+        )
+    }
+
     fun redeemOnce(redemptionId: String, cost: Int): GameProgress {
         require(redemptionId.isNotBlank()) { "Redemption id must not be blank" }
         require(cost > 0) { "Reward cost must be greater than zero" }

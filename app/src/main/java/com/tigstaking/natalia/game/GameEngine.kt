@@ -28,6 +28,8 @@ class GameEngine(private val progress: GameProgressRepository) {
 
     suspend fun simulateDiscovery(place: Place) = awardDiscovery(place)
 
+    suspend fun resetPlace(place: Place): GameProgress = progress.resetPlace(place)
+
     private suspend fun awardDiscovery(place: Place) = progress.discoverPlace(
         placeId = place.id,
         xp = place.rewards.discovery.xp,
