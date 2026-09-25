@@ -11,7 +11,7 @@ MainActivity (Compose screens and user actions)
         └── FusedLocationProvider → accurate foreground GPS fix
 ```
 
-- `app/src/main/java/com/tigstaking/natalia/MainActivity.kt` — Compose UI and wiring for Home, place check-in, quest, Spanish word, quiz, passport, child reward requests, and the PIN-gated parent approval dialog. Debug-only Developer Mode entry point is here; it advances ordered game stages and adds test stars. Screen or user-action behavior starts here.
+- `app/src/main/java/com/tigstaking/natalia/MainActivity.kt` — Compose UI and wiring for Home, place check-in, quest, Spanish word, quiz, passport, child reward requests, and the PIN-gated parent approval dialog. Debug-only Developer Mode entry point is here; it advances game stages, adjusts test progress, resets progress, and shows GPS diagnostics. Screen or user-action behavior starts here.
 - `app/src/main/java/com/tigstaking/natalia/security/ParentPinStore.kt` — Device-local parent PIN setup and verification using Android Keystore HMAC plus a short persisted lockout. Inspect this for PIN setup, failed-attempt handling, or device restore/reinstall behavior.
 - `app/src/main/java/com/tigstaking/natalia/game/CityPack.kt` — City Pack data classes, JSON parsing, and validation rules. Change this when the content schema or its validation changes.
 - `app/src/main/java/com/tigstaking/natalia/game/CityPackRepository.kt` — Loads the packaged Barcelona City Pack from Android assets.
@@ -47,6 +47,7 @@ Add or update the test next to the behavior being changed. GitHub Actions runs u
 | Progress disappears after restart | `GameProgressRepository.kt`, `GameProgressRepositoryTest.kt` |
 | A POI or quiz is wrong | `barcelona.json`, `CityPack.kt`, `CityPackTest.kt` |
 | Place unlocks from too far away or GPS is inconclusive | `GameProgress.kt`, `GameEngine.kt`, `LocationProvider.kt`, `GameRulesTest.kt` |
+| GPS permission, provider status, or missing fresh fix | `LocationProvider.kt`, GPS diagnostics in `MainActivity.kt`, Android permission settings |
 | Gradle fails before compiling app code | `gradle-wrapper.properties`, root `build.gradle.kts`, `app/build.gradle.kts`, then the Actions log |
 | App launch, navigation, or Compose semantics fail on emulator | `MainActivity.kt`, `HomeSmokeTest.kt`, then the Actions instrumentation logs |
 | Parent reward approval or star reservation is wrong | `GameProgress.kt`, `GameProgressRepository.kt`, `GameProgressRepositoryTest.kt`, `MainActivity.kt` |

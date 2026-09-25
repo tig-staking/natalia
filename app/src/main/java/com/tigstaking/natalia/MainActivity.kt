@@ -2,6 +2,7 @@ package com.tigstaking.natalia
 
 import android.Manifest
 import android.os.Bundle
+import android.location.LocationManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -47,6 +48,9 @@ import com.tigstaking.natalia.game.PlaceCheckInResult
 import com.tigstaking.natalia.game.PlayerLevel
 import com.tigstaking.natalia.game.QuizAnswerResult
 import com.tigstaking.natalia.game.location.FusedLocationProvider
+import com.tigstaking.natalia.game.location.LocationPermissionRequiredException
+import com.tigstaking.natalia.game.location.LocationServicesDisabledException
+import com.tigstaking.natalia.game.location.CurrentLocationUnavailableException
 import com.tigstaking.natalia.security.ParentPinStore
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -78,6 +82,7 @@ private fun NataliaNaTropieApp() {
     var parentPin by remember { mutableStateOf("") }
     var pinConfirmation by remember { mutableStateOf("") }
     var pinMessage by remember { mutableStateOf("") }
+    var gpsDiagnostic by remember { mutableStateOf("") }
 
     suspend fun checkIn() {
         message = "Sprawdzam lokalizację…"
@@ -93,8 +98,52 @@ private fun NataliaNaTropieApp() {
                 is PlaceCheckInResult.NeedBetterAccuracy ->
                     message = "GPS jest zbyt niedokładny (±${result.accuracyMeters.toInt()} m). Spróbuj ponownie."
             }
+        } catch (error: LocationPermissionRequiredException) {
+            message = "Brak zgody na lokalizację. Zezwól aplikacji na dostęp podczas używania."
+        } catch (error: LocationServicesDisabledException) {
+            message = "Lokalizacja urządzenia jest wyłączona. Włącz GPS i spróbuj ponownie."
+        } catch (error: CurrentLocationUnavailableException) {
+            message = "Nie ma jeszcze świeżej pozycji. Wyjdź na otwartą przestrzeń i spróbuj ponownie."
         } catch (error: Exception) {
-            message = error.message ?: "Nie udało się pobrać lokalizacji. Spróbuj ponownie."
+            message = "Nie udało się pobrać lokalizacji. Sprawdź GPS i spróbuj ponownie."
+        }
+    }
+
+    suspend fun diagnoseGps() {
+        val fineGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
+        val coarseGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
+        val manager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val gpsEnabled = runCatching { manager.isProviderEnabled(LocationManager.GPS_PROVIDER) }.getOrDefault(false)
+        val networkEnabled = runCatching { manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) }.getOrDefault(false)
+        val permission = when {
+            fineGranted -> "dokładna"
+            coarseGranted -> "przybliżona"
+            else -> "brak"
+        }
+        val providers = "GPS: ${if (gpsEnabled) "włączony" else "wyłączony"}, sieć: ${if (networkEnabled) "włączona" else "wyłączona"}"
+        gpsDiagnostic = "Uprawnienie: $permission · $providers"
+        if (!fineGranted && !coarseGranted) {
+            gpsDiagnostic += "\nBrak zgody lokalizacyjnej. Otwórz ekran miejsca, aby jej udzielić."
+            return
+        }
+        if (!gpsEnabled && !networkEnabled) {
+            gpsDiagnostic += "\nWłącz lokalizację urządzenia w ustawieniach."
+            return
+        }
+        try {
+            val fix = locationProvider.currentLocation()
+            val ageSeconds = ((System.currentTimeMillis() - fix.capturedAtMillis).coerceAtLeast(0L) / 1_000L)
+            gpsDiagnostic += "\nOstatni odczyt: dokładność ±${fix.accuracyMeters.toInt()} m, wiek ${ageSeconds} s."
+        } catch (error: LocationPermissionRequiredException) {
+            gpsDiagnostic += "\nSystem nie przyznał aplikacji uprawnienia do odczytu lokalizacji."
+        } catch (error: LocationServicesDisabledException) {
+            gpsDiagnostic += "\nUsługi lokalizacyjne są wyłączone."
+        } catch (error: CurrentLocationUnavailableException) {
+            gpsDiagnostic += "\nBrak świeżej pozycji. Spróbuj na zewnątrz lub ponownie za chwilę."
+        } catch (error: Exception) {
+            gpsDiagnostic += "\nOdczyt nie powiódł się. Sprawdź ustawienia lokalizacji."
         }
     }
 
@@ -165,6 +214,8 @@ private fun NataliaNaTropieApp() {
                                 progress = progress,
                                 progressRepository = progressRepository,
                                 onMessage = { message = it },
+                                gpsDiagnostic = gpsDiagnostic,
+                                onCheckGps = { scope.launch { diagnoseGps() } },
                                 onOpen = { updated -> screen = nextGameScreen(updated, place) },
                             )
                         }
@@ -343,10 +394,13 @@ private fun DeveloperPanel(
     progress: GameProgress,
     progressRepository: GameProgressRepository,
     onMessage: (String) -> Unit,
+    gpsDiagnostic: String,
+    onCheckGps: () -> Unit,
     onOpen: (GameProgress) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     var expanded by remember { mutableStateOf(false) }
+    var confirmReset by remember { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedButton(onClick = { expanded = !expanded }) { Text("Developer mode") }
         if (expanded) {
@@ -394,6 +448,66 @@ private fun DeveloperPanel(
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("DODAJ 10 ★ (DEBUG)") }
+            OutlinedButton(onClick = onCheckGps, modifier = Modifier.fillMaxWidth()) {
+                Text("SPRAWDŹ DIAGNOSTYKĘ GPS")
+            }
+            if (gpsDiagnostic.isNotBlank()) Text(gpsDiagnostic)
+
+            val nextLevel = PlayerLevel.entries.firstOrNull { progress.xp < it.minXp }
+            OutlinedButton(
+                enabled = nextLevel != null,
+                onClick = {
+                    val targetLevel = nextLevel ?: return@OutlinedButton
+                    scope.launch {
+                        progressRepository.awardOnce(
+                            com.tigstaking.natalia.game.RewardEvent(
+                                id = "debug-level:${UUID.randomUUID()}",
+                                source = "DEBUG",
+                                xp = (targetLevel.minXp - progress.xp).coerceAtLeast(0),
+                            ),
+                        )
+                        onMessage("Tryb deweloperski: ustawiono poziom ${PlayerLevel.entries.indexOf(targetLevel) + 1}.")
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(nextLevel?.let { "USTAW POZIOM ${PlayerLevel.entries.indexOf(it) + 1} (DEBUG)" } ?: "MAKSYMALNY POZIOM") }
+
+            val availableStars = progress.stars - progress.pendingRewardRequests.values.sumOf { it.cost }
+            OutlinedButton(
+                enabled = availableStars >= 10,
+                onClick = {
+                    scope.launch {
+                        val redeemed = progressRepository.redeemOnce("debug-reward:${UUID.randomUUID()}", 10)
+                        onMessage(if (redeemed) "Tryb deweloperski: wydano 10 ★." else "Za mało wolnych gwiazdek.")
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("WYDAJ 10 ★ (DEBUG)") }
+
+            OutlinedButton(onClick = { confirmReset = true }, modifier = Modifier.fillMaxWidth()) {
+                Text("RESETUJ POSTĘP (DEBUG)")
+            }
+            if (confirmReset) {
+                AlertDialog(
+                    onDismissRequest = { confirmReset = false },
+                    title = { Text("Zresetować postęp?") },
+                    text = { Text("To usunie lokalne XP, gwiazdki, odznaki i oczekujące prośby.") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            scope.launch {
+                                progressRepository.reset()
+                                confirmReset = false
+                                onMessage("Tryb deweloperski: postęp został wyczyszczony.")
+                                onOpen(GameProgress())
+                            }
+                        }) { Text("RESETUJ") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { confirmReset = false }) { Text("ANULUJ") }
+                    },
+                )
+            }
+
             Button(
                 onClick = {
                     scope.launch {
