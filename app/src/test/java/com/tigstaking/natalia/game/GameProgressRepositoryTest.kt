@@ -7,6 +7,8 @@ import java.io.File
 import java.nio.file.Files
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
@@ -32,7 +34,8 @@ class GameProgressRepositoryTest {
             assertTrue(firstRepository.redeemOnce("souvenir", cost = 15))
             assertTrue(firstRepository.requestRedemptionOnce("pending-ice-cream", cost = 10))
 
-            firstScope?.cancel()
+            // Wait for DataStore to release this file before opening a replacement instance.
+            firstScope?.coroutineContext?.get(Job)?.cancelAndJoin()
             firstScope = null
 
             val secondRepository = newRepository(file).also { secondScope = it.second }.first
