@@ -33,7 +33,7 @@ jobs:
           cache-provider: basic
 
       - name: Run unit tests, compile instrumentation tests, and build debug APK
-        run: ./gradlew --no-daemon testDebugUnitTest compileDebugAndroidTest assembleDebug
+        run: ./gradlew --no-daemon testDebugUnitTest compileDebugAndroidTestSources assembleDebug
 
       - name: Publish debug APK
         uses: actions/upload-artifact@v4

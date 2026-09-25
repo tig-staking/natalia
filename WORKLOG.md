@@ -20,16 +20,17 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 - Preferences DataStore persists progress locally.
 - Foreground one-shot Fused Location Provider checks coarse/fine permission, enabled location providers, and a fresh location. No background location or route history.
 - A Compose instrumentation smoke test launches the app and opens the Sagrada Família check-in screen.
-- GitHub Actions runs unit tests, compiles the instrumentation test APK, and builds a debug APK. Successful APK artifacts are retained for 14 days.
+- GitHub Actions runs unit tests, compiles instrumentation test sources, builds a debug APK, and uploads that APK. Successful APK artifacts are retained for 14 days.
 - [`docs/CODE_MAP.md`](docs/CODE_MAP.md) describes file ownership and where to look for common problems.
 
 ## Verification state
 
 - Last successful full unit-test and debug-APK run: commit `8700c722b6a4892c4ba2701b4b8821092682c7ee`.
 - Previous verified artifact `natalia-debug-apk` (id `10860897629`) expires 2026-10-09.
-- The app, unit tests, and instrumentation test sources compile. The instrumentation test itself has not completed on an emulator.
-- GitHub-hosted runs did not boot the emulator: Ubuntu could not start its x86 image with CPU acceleration, the macOS managed image exited at startup, and the direct software-emulator fallback timed out waiting for a device.
-- CI is back to a reliable Ubuntu job that runs unit tests, compiles instrumentation tests, builds the debug APK, and uploads it. Run the smoke test on a local emulator/device before treating runtime navigation as verified.
+- App source and instrumentation test source compiled successfully on commit `254c4cb2b59df82bd3d3ca25dab7e92c3142ab40`; the emulator did not boot.
+- GitHub-hosted runs did not boot the emulator: Ubuntu could not start its x86 image with CPU acceleration, macOS managed image exited at startup, and the direct software-emulator fallback timed out waiting for a device.
+- An attempted shorthand Gradle task name was ambiguous. It is replaced with the explicit `compileDebugAndroidTestSources` task; this verification run is pending.
+- Do not mark emulator verification complete until the smoke test actually passes on a device.
 - No on-device GPS test has been run.
 
 ## Known gaps to address
@@ -47,7 +48,7 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 GitHub Actions command:
 
 ```sh
-./gradlew --no-daemon testDebugUnitTest compileDebugAndroidTest assembleDebug
+./gradlew --no-daemon testDebugUnitTest compileDebugAndroidTestSources assembleDebug
 ```
 
 To run the smoke test on a connected emulator/device:
