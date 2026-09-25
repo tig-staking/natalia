@@ -55,6 +55,56 @@ class GameRulesTest {
     }
 
     @Test
+    fun accurateFixWellInsideRadiusConfirmsCheckIn() {
+        val sagrada = Coordinates(41.4036, 2.1744)
+
+        val result = Proximity.classify(sagrada, sagrada, radiusMeters = 120, accuracyMeters = 10.0)
+
+        assertTrue(result is ProximityResult.Inside)
+    }
+
+    @Test
+    fun uncertainFixNearGeofenceEdgeDoesNotConfirmCheckIn() {
+        val sagrada = Coordinates(41.4036, 2.1744)
+        val nearEdge = Coordinates(41.4046, 2.1744)
+
+        val result = Proximity.classify(nearEdge, sagrada, radiusMeters = 120, accuracyMeters = 25.0)
+
+        assertTrue(result is ProximityResult.Uncertain)
+    }
+
+    @Test
+    fun inaccurateFixAtTheCenterDoesNotConfirmCheckIn() {
+        val sagrada = Coordinates(41.4036, 2.1744)
+
+        val result = Proximity.classify(sagrada, sagrada, radiusMeters = 120, accuracyMeters = 150.0)
+
+        assertTrue(result is ProximityResult.Uncertain)
+    }
+
+    @Test
+    fun clearlyDistantFixIsOutsideEvenWithNormalAccuracy() {
+        val sagrada = Coordinates(41.4036, 2.1744)
+        val farAway = Coordinates(41.4100, 2.1744)
+
+        val result = Proximity.classify(farAway, sagrada, radiusMeters = 120, accuracyMeters = 10.0)
+
+        assertTrue(result is ProximityResult.Outside)
+    }
+
+    @Test
+    fun proximityRejectsInvalidAccuracy() {
+        val sagrada = Coordinates(41.4036, 2.1744)
+
+        assertThrows(IllegalArgumentException::class.java) {
+            Proximity.classify(sagrada, sagrada, radiusMeters = 120, accuracyMeters = Double.NaN)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            Proximity.classify(sagrada, sagrada, radiusMeters = 120, accuracyMeters = -1.0)
+        }
+    }
+
+    @Test
     fun quizAcceptsOnlyTheConfiguredCorrectAnswer() {
         val quiz = Quiz("q", "Question?", listOf("A", "B", "C"), correctAnswerIndex = 1)
 
