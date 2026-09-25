@@ -11,7 +11,8 @@ MainActivity (Compose screens and user actions)
         └── FusedLocationProvider → accurate foreground GPS fix
 ```
 
-- `app/src/main/java/com/tigstaking/natalia/MainActivity.kt` — Compose UI and wiring for Home, place check-in, quest, Spanish word, quiz, and passport. Debug-only Developer Mode entry point is here. Screen or user-action behavior starts here.
+- `app/src/main/java/com/tigstaking/natalia/MainActivity.kt` — Compose UI and wiring for Home, place check-in, quest, Spanish word, quiz, passport, child reward requests, and the PIN-gated parent approval dialog. Debug-only Developer Mode entry point is here. Screen or user-action behavior starts here.
+- `app/src/main/java/com/tigstaking/natalia/security/ParentPinStore.kt` — Device-local parent PIN setup and verification using Android Keystore HMAC plus a short persisted lockout. Inspect this for PIN setup, failed-attempt handling, or device restore/reinstall behavior.
 - `app/src/main/java/com/tigstaking/natalia/game/CityPack.kt` — City Pack data classes, JSON parsing, and validation rules. Change this when the content schema or its validation changes.
 - `app/src/main/java/com/tigstaking/natalia/game/CityPackRepository.kt` — Loads the packaged Barcelona City Pack from Android assets.
 - `app/src/main/assets/citypacks/barcelona.json` — Sagrada Família content: coordinates, radius, copy, quest, quiz, rewards, badge, and avatar pose. Content-only changes belong here.
@@ -48,6 +49,7 @@ Add or update the test next to the behavior being changed. GitHub Actions runs u
 | Place unlocks from too far away or GPS is inconclusive | `GameProgress.kt`, `GameEngine.kt`, `LocationProvider.kt`, `GameRulesTest.kt` |
 | Gradle fails before compiling app code | `gradle-wrapper.properties`, root `build.gradle.kts`, `app/build.gradle.kts`, then the Actions log |
 | App launch, navigation, or Compose semantics fail on emulator | `MainActivity.kt`, `HomeSmokeTest.kt`, then the Actions instrumentation logs |
-| Parent reward approval or star reservation is wrong | `GameProgress.kt`, `GameProgressRepository.kt`, `GameProgressRepositoryTest.kt` |
+| Parent reward approval or star reservation is wrong | `GameProgress.kt`, `GameProgressRepository.kt`, `GameProgressRepositoryTest.kt`, `MainActivity.kt` |
+| Parent PIN setup, verification, or lockout is wrong | `ParentPinStore.kt`, then the parent dialog in `MainActivity.kt` |
 
 When behavior crosses layers, update the relevant tests and this map if file ownership changes. Do not put secrets or computer-specific paths in this document.

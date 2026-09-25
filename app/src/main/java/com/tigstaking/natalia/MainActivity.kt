@@ -14,11 +14,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -30,6 +33,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import android.content.pm.PackageManager
@@ -42,7 +47,9 @@ import com.tigstaking.natalia.game.PlaceCheckInResult
 import com.tigstaking.natalia.game.PlayerLevel
 import com.tigstaking.natalia.game.QuizAnswerResult
 import com.tigstaking.natalia.game.location.FusedLocationProvider
+import com.tigstaking.natalia.security.ParentPinStore
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,6 +64,7 @@ private enum class GameScreen { HOME, PLACE, QUEST, WORD, QUIZ, PASSPORT }
 private fun NataliaNaTropieApp() {
     val context = LocalContext.current
     val progressRepository = remember(context) { GameProgressRepository(context) }
+    val parentPinStore = remember(context) { ParentPinStore(context) }
     val engine = remember(progressRepository) { GameEngine(progressRepository) }
     val place = remember(context) { CityPackRepository(context).loadBarcelona().places.first() }
     val locationProvider = remember(context) { FusedLocationProvider(context) }
@@ -65,6 +73,11 @@ private fun NataliaNaTropieApp() {
     var screen by remember { mutableStateOf(GameScreen.HOME) }
     var message by remember { mutableStateOf("") }
     var selectedAnswer by remember { mutableIntStateOf(-1) }
+    var showParentDialog by remember { mutableStateOf(false) }
+    var parentAuthenticated by remember { mutableStateOf(false) }
+    var parentPin by remember { mutableStateOf("") }
+    var pinConfirmation by remember { mutableStateOf("") }
+    var pinMessage by remember { mutableStateOf("") }
 
     suspend fun checkIn() {
         message = "Sprawdzam lokalizację…"
@@ -129,6 +142,22 @@ private fun NataliaNaTropieApp() {
                             Text(if (place.id in progress.discoveredPlaceIds) "KONTYNUUJ PRZYGODĘ" else "POKAŻ MIEJSCE")
                         }
                         Text("Misje     Paszport     Nagrody")
+                        val reservedStars = progress.pendingRewardRequests.values.sumOf { it.cost }
+                        Button(
+                            enabled = progress.stars - reservedStars >= 10,
+                            onClick = {
+                                scope.launch {
+                                    val requestId = "treat-${UUID.randomUUID()}"
+                                    val created = progressRepository.requestRedemptionOnce(requestId, 10)
+                                    message = if (created) "Prośba o nagrodę wysłana do rodzica (10 ★)."
+                                        else "Nie udało się wysłać prośby o nagrodę."
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) { Text("POPROŚ O MAŁĄ NAGRODĘ · 10 ★") }
+                        OutlinedButton(onClick = { showParentDialog = true }, modifier = Modifier.fillMaxWidth()) {
+                            Text("TRYB RODZICA")
+                        }
                         if (BuildConfig.DEBUG) {
                             DeveloperPanel(
                                 place = place,
@@ -211,6 +240,86 @@ private fun NataliaNaTropieApp() {
                 if (screen != GameScreen.HOME) {
                     Spacer(Modifier.height(4.dp))
                     OutlinedButton(onClick = { screen = GameScreen.HOME }) { Text("STRONA GŁÓWNA") }
+                }
+
+                if (showParentDialog) {
+                    AlertDialog(
+                        onDismissRequest = {
+                            showParentDialog = false
+                            parentAuthenticated = false
+                            parentPin = ""
+                            pinConfirmation = ""
+                            pinMessage = ""
+                        },
+                        title = { Text(if (parentAuthenticated) "Prośby o nagrody" else "Tryb rodzica") },
+                        text = {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                if (parentAuthenticated) {
+                                    if (progress.pendingRewardRequests.isEmpty()) {
+                                        Text("Brak oczekujących próśb.")
+                                    } else {
+                                        progress.pendingRewardRequests.values.sortedBy { it.id }.forEach { request ->
+                                            Text("Nagroda za ${request.cost} ★")
+                                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                TextButton(onClick = {
+                                                    scope.launch {
+                                                        val approved = progressRepository.approveRedemption(request.id)
+                                                        message = if (approved) "Nagroda zatwierdzona." else "Nie można zatwierdzić tej prośby."
+                                                    }
+                                                }) { Text("ZATWIERDŹ") }
+                                                TextButton(onClick = {
+                                                    scope.launch { progressRepository.cancelRedemption(request.id) }
+                                                }) { Text("ODRZUĆ") }
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    val setup = !parentPinStore.isConfigured
+                                    Text(if (setup) "Ustaw 4-cyfrowy PIN rodzica." else "Wpisz PIN rodzica.")
+                                    TextField(
+                                        value = parentPin,
+                                        onValueChange = { value -> if (value.length <= 4 && value.all { it.isDigit() }) parentPin = value },
+                                        label = { Text(if (setup) "Nowy PIN" else "PIN") },
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                                        singleLine = true,
+                                    )
+                                    if (setup) {
+                                        TextField(
+                                            value = pinConfirmation,
+                                            onValueChange = { value -> if (value.length <= 4 && value.all { it.isDigit() }) pinConfirmation = value },
+                                            label = { Text("Powtórz PIN") },
+                                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                                            singleLine = true,
+                                        )
+                                    }
+                                    if (pinMessage.isNotBlank()) Text(pinMessage)
+                                    Button(onClick = {
+                                        if (setup) {
+                                            if (parentPin.length != 4 || parentPin != pinConfirmation) {
+                                                pinMessage = "Wpisz ten sam 4-cyfrowy PIN w obu polach."
+                                            } else if (parentPinStore.setPin(parentPin)) {
+                                                parentAuthenticated = true
+                                                pinMessage = ""
+                                            } else pinMessage = "Nie udało się zapisać PIN-u na tym urządzeniu."
+                                        } else if (parentPinStore.verify(parentPin)) {
+                                            parentAuthenticated = true
+                                            pinMessage = ""
+                                        } else pinMessage = "Nieprawidłowy PIN lub chwilowa blokada."
+                                    }, modifier = Modifier.fillMaxWidth()) {
+                                        Text(if (setup) "USTAW PIN I KONTYNUUJ" else "ODBLOKUJ")
+                                    }
+                                }
+                            }
+                        },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                showParentDialog = false
+                                parentAuthenticated = false
+                                parentPin = ""
+                                pinConfirmation = ""
+                            }) { Text("ZAMKNIJ") }
+                        },
+                    )
                 }
             }
         }
