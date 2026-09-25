@@ -31,7 +31,8 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 
 - Green GitHub Actions run for code commit `c3c8e73d868721675463903250f2acd7c4e6f92b`: unit tests, instrumentation test compilation, debug APK build, and artifact upload passed. Documentation-only commit `4897bd830a7a7759b5143b442d0e0989733bc516` also passed.
 - Parent PIN and Compose approval UI commit `2ca9bd0702be2504cd7dc2ab7576204b519c8628` passed GitHub Actions run [36155555226](https://github.com/tig-staking/natalia/actions/runs/36155555226): unit tests, instrumentation source compilation, debug APK build, and artifact upload. APK artifact `10873641102` is available until 2026-10-09.
-- Developer Mode stage controls were committed after that run; current engine UI revision still needs CI and Android device/emulator verification.
+- Developer Mode stage controls commit `20e51519a681110ab3e480ac825fb29b7f5ae3ad` passed GitHub Actions run [36156150073](https://github.com/tig-staking/natalia/actions/runs/36156150073): unit tests, instrumentation source compilation, debug APK build, and artifact upload. APK artifact `10873961581` is available until 2026-10-09.
+- CI passed for the parent PIN and Developer Mode changes. The emulator smoke test still only compiles in hosted CI; no runtime emulator or physical-device GPS test has been run.
 - The run uploaded artifact `natalia-debug-apk` (id `10864448021`), available until 2026-10-09.
 - Tests cover reward request reservation, no spending before approval, idempotent approval, cancellation, ledger entries, and persistence of pending requests after repository recreation.
 - The emulator smoke test has compiled but has not run on a device. GitHub-hosted runs could not boot the configured emulator; CI avoids emulator startup while keeping the instrumentation compile check.
