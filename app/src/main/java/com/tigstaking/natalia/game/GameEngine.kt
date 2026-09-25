@@ -1,7 +1,16 @@
 package com.tigstaking.natalia.game
 
 class GameEngine(private val progress: GameProgressRepository) {
-    suspend fun discover(place: Place) = progress.discoverPlace(
+    suspend fun checkIn(place: Place, userLocation: Coordinates): PlaceCheckInResult {
+        val distance = Proximity.distanceMeters(userLocation, place.coordinates)
+        if (distance > place.geofenceRadiusMeters) return PlaceCheckInResult.TooFar(distance)
+        val state = awardDiscovery(place)
+        return PlaceCheckInResult.Confirmed(distance, state)
+    }
+
+    suspend fun simulateDiscovery(place: Place) = awardDiscovery(place)
+
+    private suspend fun awardDiscovery(place: Place) = progress.discoverPlace(
         placeId = place.id,
         xp = place.rewards.discovery.xp,
         stars = place.rewards.discovery.stars,
@@ -36,4 +45,9 @@ class GameEngine(private val progress: GameProgressRepository) {
 sealed interface QuizAnswerResult {
     data class TryAgain(val correctAnswerIndex: Int) : QuizAnswerResult
     data class Correct(val progress: GameProgress) : QuizAnswerResult
+}
+
+sealed interface PlaceCheckInResult {
+    data class TooFar(val distanceMeters: Double) : PlaceCheckInResult
+    data class Confirmed(val distanceMeters: Double, val progress: GameProgress) : PlaceCheckInResult
 }

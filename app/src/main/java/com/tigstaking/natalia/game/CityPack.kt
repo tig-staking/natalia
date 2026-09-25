@@ -73,6 +73,12 @@ data class CityPack(
         }
         require(defaultZoom > 0.0) { "Default map zoom must be positive" }
         require(places.map(Place::id).distinct().size == places.size) { "Place ids must be unique" }
+        require(places.map(Place::quest).map(Quest::id).distinct().size == places.size) {
+            "Quest ids must be unique within a City Pack"
+        }
+        require(places.map(Place::quiz).map(Quiz::id).distinct().size == places.size) {
+            "Quiz ids must be unique within a City Pack"
+        }
     }
 }
 
@@ -94,6 +100,10 @@ data class Place(
 ) {
     fun validate() {
         require(id.isNotBlank() && name.isNotBlank()) { "Place id and name are required" }
+        require(intro.isNotBlank() && fact.isNotBlank()) { "Place intro and fact are required" }
+        require(spanishWord.word.isNotBlank() && spanishWord.meaning.isNotBlank()) { "Spanish word is required" }
+        require(quest.id.isNotBlank() && quest.prompt.isNotBlank()) { "Quest id and prompt are required" }
+        require(quiz.id.isNotBlank() && quiz.question.isNotBlank()) { "Quiz id and question are required" }
         require(coordinates.latitude in -90.0..90.0 && coordinates.longitude in -180.0..180.0) {
             "Place coordinates are out of range"
         }
