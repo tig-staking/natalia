@@ -26,15 +26,15 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 
 ## Verification state
 
-- Green GitHub Actions run for commit `c72ed6131d02cdd7c42d320641e4f0ac96ec10c5`: unit tests, instrumentation test compilation, debug APK build, and artifact upload passed.
+- Last successful full unit-test and debug-APK run: commit `c72ed6131d02cdd7c42d320641e4f0ac96ec10c5`.
 - Previous verified artifact `natalia-debug-apk` (id `10860897629`) expires 2026-10-09.
-- The app, unit tests, and instrumentation test sources compile. The instrumentation test itself has not completed on an emulator.
-- GitHub-hosted runners could not boot the emulator in the attempts so far; CI currently avoids emulator startup while keeping the instrumentation test compile check.
-- No on-device GPS test has been run.
+- On commit `3d42eb9386c1aceb12a919ce5b378d98ba533239`, application and test sources compiled, but the new DataStore test failed because it opened a second active store on the same file. The test now checks request persistence and approval within one repository instance; the existing repository test covers process-style recreation.
+- The emulator smoke test has compiled but has not run on a device. GitHub-hosted runs could not boot the configured emulator; CI avoids emulator startup while keeping the instrumentation compile check.
+- A fix commit is pending CI. No on-device GPS test has been run.
 
 ## Known gaps to address
 
-1. Run the Compose smoke test on an Android Studio emulator or a connected Android device; then field-test GPS behavior on a physical phone.
+1. Verify the reward request test and maintain green CI; run the Compose smoke test on an Android Studio emulator or connected Android device, then field-test GPS behavior on a physical phone.
 2. Add secure parent authentication with a 4-digit PIN stored as a salted hash using Android Keystore-backed secret material, and connect approval actions to the authenticated parent flow. Do not store a plain-text PIN.
 3. Finish a real Developer Mode: simulate/override location, unlock POI, complete stages, edit stars, force level, redeem reward, reset POI/all, create test POI at current location, and show GPS diagnostics. Current debug shortcut only simulates Sagrada discovery.
 4. Add onboarding, actual map/POI overview, location diagnostics, and recovery paths for permission denied, approximate location, disabled GPS, stale/unavailable fixes.
