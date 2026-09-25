@@ -739,12 +739,12 @@ private fun DeveloperPanel(
                 onClick = {
                     scope.launch {
                         val updated = engine.simulateDiscovery(place)
-                        onMessage("Test: Sagrada Família odkryta.")
+                        onMessage("Test: ${place.name} odkryte.")
                         onOpen(updated)
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("ODKRYJ SAGRADĘ BEZ SPRAWDZANIA GPS (DEBUG)") }
+            ) { Text("ODKRYJ MIEJSCE BEZ SPRAWDZANIA GPS (DEBUG)") }
         }
     }
 }
