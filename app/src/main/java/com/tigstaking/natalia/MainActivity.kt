@@ -72,7 +72,7 @@ private fun NataliaNaTropieApp() {
     val progressRepository = remember(context) { GameProgressRepository(context) }
     val parentPinStore = remember(context) { ParentPinStore(context) }
     val engine = remember(progressRepository) { GameEngine(progressRepository) }
-    val place = remember(context) { CityPackRepository(context).loadBarcelona().places.first() }
+    var place by remember(context) { mutableStateOf(CityPackRepository(context).loadBarcelona().places.first()) }
     val locationProvider = remember(context) { FusedLocationProvider(context) }
     val progress by progressRepository.progress.collectAsState(initial = GameProgress())
     val scope = rememberCoroutineScope()
@@ -85,6 +85,25 @@ private fun NataliaNaTropieApp() {
     var pinConfirmation by remember { mutableStateOf("") }
     var pinMessage by remember { mutableStateOf("") }
     var gpsDiagnostic by remember { mutableStateOf("") }
+
+    suspend fun createTestPoi() {
+        try {
+            val location = locationProvider.currentLocation()
+            val testId = "debug-${UUID.randomUUID()}"
+            place = place.copy(
+                id = testId,
+                name = "Testowy punkt",
+                coordinates = location.coordinates,
+                geofenceRadiusMeters = 25,
+                quest = place.quest.copy(id = "$testId-quest"),
+                quiz = place.quiz.copy(id = "$testId-quiz"),
+            )
+            screen = GameScreen.PLACE
+            message = "Utworzono tymczasowy punkt testowy w bieżącej lokalizacji (±${location.accuracyMeters.toInt()} m)."
+        } catch (error: Exception) {
+            message = "Nie utworzono punktu testowego. Sprawdź uprawnienie i diagnostykę GPS."
+        }
+    }
 
     suspend fun checkIn() {
         message = "Sprawdzam lokalizację…"
@@ -218,6 +237,7 @@ private fun NataliaNaTropieApp() {
                                 onMessage = { message = it },
                                 gpsDiagnostic = gpsDiagnostic,
                                 onCheckGps = { scope.launch { diagnoseGps() } },
+                                onCreateTestPoi = { scope.launch { createTestPoi() } },
                                 onOpen = { updated -> screen = nextGameScreen(updated, place) },
                             )
                         }
@@ -398,6 +418,7 @@ private fun DeveloperPanel(
     onMessage: (String) -> Unit,
     gpsDiagnostic: String,
     onCheckGps: () -> Unit,
+    onCreateTestPoi: () -> Unit,
     onOpen: (GameProgress) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -454,6 +475,9 @@ private fun DeveloperPanel(
                 Text("SPRAWDŹ DIAGNOSTYKĘ GPS")
             }
             if (gpsDiagnostic.isNotBlank()) Text(gpsDiagnostic)
+            OutlinedButton(onClick = onCreateTestPoi, modifier = Modifier.fillMaxWidth()) {
+                Text("UTWÓRZ TESTOWY PUNKT TU, GDZIE JESTEM")
+            }
 
             fun simulateLocation(coordinates: Coordinates, accuracyMeters: Double) {
                 scope.launch {
