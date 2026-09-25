@@ -1,11 +1,27 @@
 package com.tigstaking.natalia.game
 
 class GameEngine(private val progress: GameProgressRepository) {
-    suspend fun checkIn(place: Place, userLocation: Coordinates): PlaceCheckInResult {
-        val distance = Proximity.distanceMeters(userLocation, place.coordinates)
-        if (distance > place.geofenceRadiusMeters) return PlaceCheckInResult.TooFar(distance)
-        val state = awardDiscovery(place)
-        return PlaceCheckInResult.Confirmed(distance, state)
+    suspend fun checkIn(
+        place: Place,
+        userLocation: Coordinates,
+        accuracyMeters: Double,
+    ): PlaceCheckInResult = when (
+        val proximity = Proximity.classify(
+            user = userLocation,
+            place = place.coordinates,
+            radiusMeters = place.geofenceRadiusMeters,
+            accuracyMeters = accuracyMeters,
+        )
+    ) {
+        is ProximityResult.Outside -> PlaceCheckInResult.TooFar(proximity.distanceMeters)
+        is ProximityResult.Uncertain -> PlaceCheckInResult.NeedBetterAccuracy(
+            proximity.distanceMeters,
+            proximity.accuracyMeters,
+        )
+        is ProximityResult.Inside -> PlaceCheckInResult.Confirmed(
+            proximity.distanceMeters,
+            awardDiscovery(place),
+        )
     }
 
     suspend fun simulateDiscovery(place: Place) = awardDiscovery(place)
@@ -49,5 +65,6 @@ sealed interface QuizAnswerResult {
 
 sealed interface PlaceCheckInResult {
     data class TooFar(val distanceMeters: Double) : PlaceCheckInResult
+    data class NeedBetterAccuracy(val distanceMeters: Double, val accuracyMeters: Double) : PlaceCheckInResult
     data class Confirmed(val distanceMeters: Double, val progress: GameProgress) : PlaceCheckInResult
 }
