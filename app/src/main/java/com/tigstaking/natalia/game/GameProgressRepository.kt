@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.doublePreferencesKey
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
@@ -20,6 +21,11 @@ class GameProgressRepository(private val dataStore: DataStore<Preferences>) {
     constructor(context: Context) : this(context.applicationContext.gameProgressDataStore)
 
     val progress: Flow<GameProgress> = dataStore.data.map(::decode)
+    val onboardingCompleted: Flow<Boolean> = dataStore.data.map { it[onboardingCompletedKey] ?: false }
+
+    suspend fun completeOnboarding() {
+        dataStore.edit { it[onboardingCompletedKey] = true }
+    }
 
     val debugTestPoi: Flow<DebugTestPoi?> = dataStore.data.map { preferences ->
         val id = preferences[debugTestPoiIdKey]
@@ -243,6 +249,7 @@ class GameProgressRepository(private val dataStore: DataStore<Preferences>) {
     }.getOrDefault(emptyMap())
 
     private companion object {
+        val onboardingCompletedKey = booleanPreferencesKey("onboarding_completed")
         val xpKey = intPreferencesKey("xp")
         val starsKey = intPreferencesKey("stars")
         val appliedEventsKey = stringSetPreferencesKey("applied_events")

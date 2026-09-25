@@ -36,8 +36,19 @@ class GameEngine(private val progress: GameProgressRepository) {
         stars = place.rewards.discovery.stars,
     )
 
-    suspend fun completeQuest(place: Place): GameProgress {
+    suspend fun completeQuest(
+        place: Place,
+        answerIndex: Int? = null,
+        parentConfirmed: Boolean = false,
+    ): GameProgress {
         requireDiscovered(place)
+        when (place.quest.type) {
+            QuestType.MULTIPLE_CHOICE -> check(answerIndex != null && place.quest.isCorrect(answerIndex)) {
+                "Choose the correct quest answer"
+            }
+            QuestType.PARENT_CHECK -> check(parentConfirmed) { "A parent must confirm this quest" }
+            QuestType.OBSERVATION, QuestType.SAY_PHRASE -> Unit
+        }
         return progress.completeQuest(
             questId = place.quest.id,
             xp = place.rewards.quest.xp,

@@ -18,6 +18,39 @@ import org.junit.Test
 
 class GameEngineTest {
     @Test
+    fun typedQuestRulesRequireCorrectAnswerOrParentConfirmation() = runBlocking {
+        val directory = Files.createTempDirectory("natalia-typed-quest-test").toFile()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        val dataStore: DataStore<Preferences> = PreferenceDataStoreFactory.create(
+            scope = scope,
+            produceFile = { File(directory, "progress.preferences_pb") },
+        )
+        val repository = GameProgressRepository(dataStore)
+        val engine = GameEngine(repository)
+        val base = samplePlace()
+        val choicePlace = base.copy(
+            quest = Quest("choice-quest", QuestType.MULTIPLE_CHOICE, "Choose", listOf("A", "B"), 1),
+        )
+        val parentPlace = base.copy(quest = Quest("parent-quest", QuestType.PARENT_CHECK, "Ask your parent"))
+        try {
+            engine.simulateDiscovery(base)
+            assertTrue(runCatching { engine.completeQuest(choicePlace, answerIndex = 0) }.isFailure)
+            engine.completeQuest(choicePlace, answerIndex = 1)
+            assertTrue(runCatching { engine.completeQuest(parentPlace) }.isFailure)
+            engine.completeQuest(parentPlace, parentConfirmed = true)
+
+            val progress = repository.progress.first()
+            assertTrue("choice-quest" in progress.completedQuestIds)
+            assertTrue("parent-quest" in progress.completedQuestIds)
+            assertEquals(50, progress.xp)
+            assertEquals(50, progress.stars)
+        } finally {
+            scope.cancel()
+            directory.deleteRecursively()
+        }
+    }
+
+    @Test
     fun sagradaFlowRequiresOrderedStagesAndPaysRewardsOnlyOnce() = runBlocking {
         val directory = Files.createTempDirectory("natalia-engine-test").toFile()
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -35,6 +68,15 @@ class GameEngineTest {
             }.isFailure)
 
             engine.simulateDiscovery(place)
+            val multipleChoiceQuest = place.copy(
+                quest = Quest("choice-quest", QuestType.MULTIPLE_CHOICE, "Choose", listOf("A", "B"), 1),
+            )
+            assertTrue("Wrong quest choice must not complete the quest", runCatching {
+                engine.completeQuest(multipleChoiceQuest, answerIndex = 0)
+            }.isFailure)
+            assertTrue("Parent-check quests stay locked until confirmed", runCatching {
+                engine.completeQuest(place.copy(quest = Quest("parent-quest", QuestType.PARENT_CHECK, "Ask a parent")))
+            }.isFailure)
             assertTrue("Word must stay locked until quest completion", runCatching {
                 engine.learnSpanishWord(place)
             }.isFailure)

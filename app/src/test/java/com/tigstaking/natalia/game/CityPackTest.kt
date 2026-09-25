@@ -37,6 +37,17 @@ class CityPackTest {
         }
     }
 
+    @Test
+    fun parsesMultipleChoiceQuestAnswers() {
+        val choiceQuestJson = validPackJson.replace(
+            "\"type\": \"OBSERVATION\", \"prompt\": \"Look around\"",
+            "\"type\": \"MULTIPLE_CHOICE\", \"prompt\": \"Choose\", \"answers\": [\"A\", \"B\"], \"correctAnswerIndex\": 1",
+        )
+        val quest = CityPack.parse(choiceQuestJson).places.single().quest
+        assertEquals(listOf("A", "B"), quest.answers)
+        assertEquals(1, quest.correctAnswerIndex)
+    }
+
     private companion object {
         val validPackJson = """
             {

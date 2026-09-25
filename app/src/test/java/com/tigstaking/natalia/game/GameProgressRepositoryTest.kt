@@ -20,6 +20,29 @@ import org.junit.Test
 
 class GameProgressRepositoryTest {
     @Test
+    fun onboardingCompletionSurvivesRepositoryRecreation() = runBlocking {
+        val directory = Files.createTempDirectory("natalia-onboarding-test").toFile()
+        val file = File(directory, "game_progress.preferences_pb")
+        var firstScope: CoroutineScope? = null
+        var secondScope: CoroutineScope? = null
+        try {
+            val first = newRepository(file).also { firstScope = it.second }.first
+            assertFalse(first.onboardingCompleted.first())
+            first.completeOnboarding()
+            assertTrue(first.onboardingCompleted.first())
+
+            firstScope?.coroutineContext?.get(Job)?.cancelAndJoin()
+            firstScope = null
+            val restored = newRepository(file).also { secondScope = it.second }.first
+            assertTrue(restored.onboardingCompleted.first())
+        } finally {
+            firstScope?.cancel()
+            secondScope?.cancel()
+            directory.deleteRecursively()
+        }
+    }
+
+    @Test
     fun rewardsAndLedgerSurviveRepositoryRecreationAndResetClearsThem() = runBlocking {
         val directory = Files.createTempDirectory("natalia-progress-test").toFile()
         val file = File(directory, "game_progress.preferences_pb")

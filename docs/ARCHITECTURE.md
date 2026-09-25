@@ -8,6 +8,7 @@ The Android app lives in `app/`. Compose screens are presentation only; game rul
 - `GameProgress` applies XP/star events only once and rejects XP spending or negative star balances.
 - `GameProgressRepository` stores progress locally with Preferences DataStore and records an append-only reward ledger.
 - `GameEngine` awards discovery, quest, Spanish word and quiz rewards from each place's reward plan; wrong quiz answers can be retried without changing progress.
+- Quest types are data-driven: observation and say-phrase use a player confirmation, multiple-choice requires the configured correct answer, and parent-check requires an explicit PIN-gated parent confirmation.
 - `Proximity` calculates straight-line distance in meters and checks a place radius.
 - `FusedLocationProvider` retrieves a fresh, one-shot foreground fix; `GameEngine.checkIn` only records discovery while that fix is inside the place radius.
 - `PlayerLevel` maps XP to the four levels in the product spec.

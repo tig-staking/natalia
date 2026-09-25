@@ -27,6 +27,7 @@ data class CityPack(
                     val place = places.getJSONObject(index)
                     val word = place.getJSONObject("spanishWord")
                     val quest = place.getJSONObject("quest")
+                    val questAnswers = quest.optJSONArray("answers")
                     val quiz = place.getJSONObject("quiz")
                     val answers = quiz.getJSONArray("answers")
                     val rewards = place.getJSONObject("rewards")
@@ -42,6 +43,11 @@ data class CityPack(
                             quest.getString("id"),
                             QuestType.valueOf(quest.getString("type")),
                             quest.getString("prompt"),
+                            questAnswers?.let { answers -> (0 until answers.length()).map(answers::getString) }
+                                ?: emptyList(),
+                            if (quest.has("correctAnswerIndex") && !quest.isNull("correctAnswerIndex")) {
+                                quest.getInt("correctAnswerIndex")
+                            } else null,
                         ),
                         quiz = Quiz(
                             id = quiz.getString("id"),
@@ -121,7 +127,25 @@ data class Place(
 
 data class SpanishWord(val word: String, val meaning: String)
 enum class QuestType { OBSERVATION, SAY_PHRASE, MULTIPLE_CHOICE, PARENT_CHECK }
-data class Quest(val id: String, val type: QuestType, val prompt: String)
+data class Quest(
+    val id: String,
+    val type: QuestType,
+    val prompt: String,
+    val answers: List<String> = emptyList(),
+    val correctAnswerIndex: Int? = null,
+) {
+    init {
+        require(id.isNotBlank() && prompt.isNotBlank()) { "Quest id and prompt are required" }
+        if (type == QuestType.MULTIPLE_CHOICE) {
+            require(answers.size >= 2 && correctAnswerIndex != null && correctAnswerIndex in answers.indices) {
+                "Multiple-choice quest needs at least two answers and a valid correct answer"
+            }
+            require(answers.all(String::isNotBlank)) { "Quest answers must not be blank" }
+        }
+    }
+
+    fun isCorrect(answerIndex: Int) = type == QuestType.MULTIPLE_CHOICE && answerIndex == correctAnswerIndex
+}
 data class Quiz(val id: String, val question: String, val answers: List<String>, val correctAnswerIndex: Int) {
     fun isCorrect(answerIndex: Int) = answerIndex == correctAnswerIndex
 }

@@ -15,7 +15,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.scaleIn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -27,6 +33,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -42,6 +49,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
+import kotlinx.coroutines.delay
 import androidx.core.content.ContextCompat
 import android.content.pm.PackageManager
 import com.tigstaking.natalia.game.CityPackRepository
@@ -71,7 +81,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private enum class GameScreen { HOME, PLACE, QUEST, WORD, QUIZ, PASSPORT }
+private enum class GameScreen { ONBOARDING, HOME, MAP, PLACE, QUEST, WORD, QUIZ, PASSPORT }
 
 @Composable
 private fun NataliaNaTropieApp() {
@@ -104,23 +114,36 @@ private fun NataliaNaTropieApp() {
     val speechStatus by spanishSpeech.status.collectAsState()
     DisposableEffect(spanishSpeech) { onDispose { spanishSpeech.close() } }
     val progress by progressRepository.progress.collectAsState(initial = GameProgress())
+    val onboardingCompleted by progressRepository.onboardingCompleted.collectAsState(initial = false)
     val scope = rememberCoroutineScope()
-    var screen by remember { mutableStateOf(GameScreen.HOME) }
+    var screen by remember { mutableStateOf(if (onboardingCompleted) GameScreen.HOME else GameScreen.ONBOARDING) }
     var message by remember { mutableStateOf("") }
+    var celebration by remember { mutableStateOf("") }
     var selectedAnswer by remember { mutableIntStateOf(-1) }
     var showParentDialog by remember { mutableStateOf(false) }
     var parentAuthenticated by remember { mutableStateOf(false) }
+    var parentQuestPending by remember { mutableStateOf(false) }
     var parentPin by remember { mutableStateOf("") }
     var pinConfirmation by remember { mutableStateOf("") }
     var pinMessage by remember { mutableStateOf("") }
     var gpsDiagnostic by remember { mutableStateOf("") }
     var createTestPoiAfterPermission by remember { mutableStateOf(false) }
+    var mapLocationAfterPermission by remember { mutableStateOf(false) }
+    var mapCoordinates by remember { mutableStateOf<Coordinates?>(null) }
+    var mapAccuracy by remember { mutableStateOf<Double?>(null) }
+    LaunchedEffect(celebration) {
+        if (celebration.isNotBlank()) {
+            delay(1_400)
+            celebration = ""
+        }
+    }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_STOP) {
                 showParentDialog = false
                 parentAuthenticated = false
+                parentQuestPending = false
                 parentPin = ""
                 pinConfirmation = ""
                 pinMessage = ""
@@ -156,6 +179,8 @@ private fun NataliaNaTropieApp() {
             when (val result = engine.checkIn(place, location.coordinates, location.accuracyMeters.toDouble())) {
                 is PlaceCheckInResult.Confirmed -> {
                     message = "Miejsce odkryte! Dokładność GPS ±${location.accuracyMeters.toInt()} m."
+                    celebration = levelUpCelebration(progress.xp, result.progress.xp)
+                        ?: "NOWA MISJA! ${place.name}"
                     screen = GameScreen.QUEST
                 }
                 is PlaceCheckInResult.TooFar ->
@@ -171,6 +196,22 @@ private fun NataliaNaTropieApp() {
             message = "Nie ma jeszcze świeżej pozycji. Wyjdź na otwartą przestrzeń i spróbuj ponownie."
         } catch (error: Exception) {
             message = "Nie udało się pobrać lokalizacji. Sprawdź GPS i spróbuj ponownie."
+        }
+    }
+
+    suspend fun finishQuest(answerIndex: Int? = null, parentConfirmed: Boolean = false): Boolean {
+        return try {
+            val updated = engine.completeQuest(place, answerIndex, parentConfirmed)
+            message = "Misja ukończona! +${place.rewards.quest.xp} XP, +${place.rewards.quest.stars} ★"
+            celebration = levelUpCelebration(progress.xp, updated.xp) ?: "JEST! MISJA UKOŃCZONA"
+            screen = GameScreen.WORD
+            true
+        } catch (_: IllegalStateException) {
+            message = if (place.quest.type == com.tigstaking.natalia.game.QuestType.MULTIPLE_CHOICE) {
+                "Hmm… wybierz właściwą odpowiedź i spróbuj ponownie."
+            } else "Nie można jeszcze ukończyć tej misji."
+            celebration = "Hmm… SPRÓBUJ PONOWNIE"
+            false
         }
     }
 
@@ -212,6 +253,24 @@ private fun NataliaNaTropieApp() {
         }
     }
 
+    suspend fun refreshMapLocation() {
+        message = "Pobieram pozycję do mapy…"
+        try {
+            val fix = locationProvider.currentLocation()
+            mapCoordinates = fix.coordinates
+            mapAccuracy = fix.accuracyMeters.toDouble()
+            message = "Pozycja mapy zaktualizowana."
+        } catch (error: LocationPermissionRequiredException) {
+            message = "Brak zgody na lokalizację."
+        } catch (error: LocationServicesDisabledException) {
+            message = "Włącz lokalizację urządzenia, aby pokazać swoją pozycję."
+        } catch (error: CurrentLocationUnavailableException) {
+            message = "Brak świeżej pozycji. Spróbuj ponownie na zewnątrz."
+        } catch (error: Exception) {
+            message = "Nie udało się pobrać pozycji. Spróbuj ponownie."
+        }
+    }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { permissions ->
@@ -220,10 +279,26 @@ private fun NataliaNaTropieApp() {
             createTestPoiAfterPermission = false
             if (permissionGranted) scope.launch { createTestPoi() }
             else message = "Zezwól na lokalizację podczas używania aplikacji, aby utworzyć testowy punkt."
+        } else if (mapLocationAfterPermission) {
+            mapLocationAfterPermission = false
+            if (permissionGranted) scope.launch { refreshMapLocation() }
+            else message = "Zezwól na lokalizację, aby pokazać swoją pozycję na mapie."
         } else if (permissionGranted) {
             scope.launch { checkIn() }
         } else {
             message = "Zezwól na lokalizację podczas używania aplikacji, aby odkryć miejsce."
+        }
+    }
+
+    fun requestMapLocation() {
+        val fineGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
+        val coarseGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
+        if (fineGranted || coarseGranted) scope.launch { refreshMapLocation() }
+        else {
+            mapLocationAfterPermission = true
+            permissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
         }
     }
 
@@ -259,7 +334,7 @@ private fun NataliaNaTropieApp() {
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             Column(
-                modifier = Modifier.fillMaxSize().padding(24.dp),
+                modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Text("NATALIA NA TROPIE", style = MaterialTheme.typography.headlineMedium)
@@ -273,25 +348,72 @@ private fun NataliaNaTropieApp() {
                 }
 
                 when (screen) {
+                    GameScreen.ONBOARDING -> {
+                        Text("CZEŚĆ, NATALIA!", style = MaterialTheme.typography.headlineMedium)
+                        Card(Modifier.fillMaxWidth()) {
+                            Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Text("NATALIA NA TROPIE", style = MaterialTheme.typography.titleLarge)
+                                Text("Czeka na Ciebie przygoda w Barcelonie. Odkrywaj miejsca, wykonuj misje, ucz się hiszpańskiego i zbieraj odznaki.")
+                                Text("Twój postęp zapisuje się na tym urządzeniu. Lokalizacja jest używana tylko do sprawdzania, czy jesteś przy miejscu.")
+                            }
+                        }
+                        Button(onClick = {
+                            scope.launch {
+                                progressRepository.completeOnboarding()
+                                screen = GameScreen.HOME
+                            }
+                        }, modifier = Modifier.fillMaxWidth()) { Text("ROZPOCZNIJ PRZYGODĘ") }
+                    }
+                    GameScreen.MAP -> {
+                        Text("MAPA PRZYGODY", style = MaterialTheme.typography.titleLarge)
+                        val completed = place.quiz.id in progress.completedQuizIds
+                        val discovered = place.id in progress.discoveredPlaceIds
+                        val mapStatus = when {
+                            completed -> "UKOŃCZONE"
+                            discovered && place.quest.id in progress.completedQuestIds -> "W TOKU"
+                            discovered -> "ODKRYTE"
+                            else -> "ZABLOKOWANE"
+                        }
+                        Card(Modifier.fillMaxWidth()) {
+                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("${place.name} · $mapStatus", style = MaterialTheme.typography.titleMedium)
+                                LocalMap(place.coordinates, mapCoordinates, place.geofenceRadiusMeters)
+                                Text(place.name)
+                                Text("Punkt: ${"%.5f".format(place.coordinates.latitude)}, ${"%.5f".format(place.coordinates.longitude)}")
+                                val userPoint = mapCoordinates
+                                if (userPoint != null) {
+                                    val distance = com.tigstaking.natalia.game.Proximity.distanceMeters(userPoint, place.coordinates)
+                                    Text("Twoja pozycja: ${"%.5f".format(userPoint.latitude)}, ${"%.5f".format(userPoint.longitude)}")
+                                    Text("Odległość: ${distance.toInt()} m · dokładność ±${mapAccuracy?.toInt() ?: "?"} m")
+                                } else Text("Twoja pozycja nie jest jeszcze dostępna.")
+                            }
+                        }
+                        OutlinedButton(onClick = ::requestMapLocation, modifier = Modifier.fillMaxWidth()) {
+                            Text("ODŚWIEŻ MOJĄ POZYCJĘ")
+                        }
+                        Button(onClick = { screen = GameScreen.PLACE }, modifier = Modifier.fillMaxWidth()) {
+                            Text("OTWÓRZ MIEJSCE")
+                        }
+                    }
                     GameScreen.HOME -> {
                         Text("Cześć, Natalia! Twoja przygoda w Barcelonie czeka.")
                         Button(onClick = { screen = nextScreen }, modifier = Modifier.fillMaxWidth()) {
                             Text(if (place.id in progress.discoveredPlaceIds) "KONTYNUUJ PRZYGODĘ" else "POKAŻ MIEJSCE")
                         }
-                        Text("Misje     Paszport     Nagrody")
+                        OutlinedButton(onClick = { screen = GameScreen.MAP; requestMapLocation() }, modifier = Modifier.fillMaxWidth()) { Text("MAPA PRZYGODY") }
                         val reservedStars = progress.pendingRewardRequests.values.sumOf { it.cost }
                         Button(
-                            enabled = progress.stars - reservedStars >= 10,
+                            enabled = progress.stars - reservedStars >= 100,
                             onClick = {
                                 scope.launch {
                                     val requestId = "treat-${UUID.randomUUID()}"
-                                    val created = progressRepository.requestRedemptionOnce(requestId, 10)
-                                    message = if (created) "Prośba o nagrodę wysłana do rodzica (10 ★)."
+                                    val created = progressRepository.requestRedemptionOnce(requestId, 100)
+                                    message = if (created) "Prośba o lody wysłana do rodzica (100 ★)."
                                         else "Nie udało się wysłać prośby o nagrodę."
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),
-                        ) { Text("POPROŚ O MAŁĄ NAGRODĘ · 10 ★") }
+                        ) { Text("POPROŚ O LODY · 100 ★") }
                         OutlinedButton(onClick = { showParentDialog = true }, modifier = Modifier.fillMaxWidth()) {
                             Text("TRYB RODZICA")
                         }
@@ -328,16 +450,28 @@ private fun NataliaNaTropieApp() {
                     GameScreen.QUEST -> {
                         Text("MISJA", style = MaterialTheme.typography.titleLarge)
                         Text(place.quest.prompt)
-                        Button(
-                            onClick = {
-                                scope.launch {
-                                    engine.completeQuest(place)
-                                    message = "Misja ukończona! +${place.rewards.quest.xp} XP, +${place.rewards.quest.stars} ★"
-                                    screen = GameScreen.WORD
+                        when (place.quest.type) {
+                            com.tigstaking.natalia.game.QuestType.MULTIPLE_CHOICE ->
+                                place.quest.answers.forEachIndexed { index, answer ->
+                                    OutlinedButton(
+                                        onClick = { scope.launch { finishQuest(answerIndex = index) } },
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) { Text(answer) }
                                 }
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) { Text("ZROBIONE!") }
+                            com.tigstaking.natalia.game.QuestType.PARENT_CHECK -> {
+                                Text("Rodzic musi potwierdzić wykonanie tej misji.")
+                                Button(onClick = {
+                                    parentQuestPending = true
+                                    showParentDialog = true
+                                }, modifier = Modifier.fillMaxWidth()) { Text("POPROŚ RODZICA O POTWIERDZENIE") }
+                            }
+                            com.tigstaking.natalia.game.QuestType.OBSERVATION,
+                            com.tigstaking.natalia.game.QuestType.SAY_PHRASE ->
+                                Button(
+                                    onClick = { scope.launch { finishQuest() } },
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) { Text(if (place.quest.type == com.tigstaking.natalia.game.QuestType.SAY_PHRASE) "POWIEDZIANE!" else "ZROBIONE!") }
+                        }
                     }
                     GameScreen.WORD -> {
                         Text("SŁÓWKO PO HISZPAŃSKU", style = MaterialTheme.typography.titleLarge)
@@ -357,8 +491,9 @@ private fun NataliaNaTropieApp() {
                         Button(
                             onClick = {
                                 scope.launch {
-                                    engine.learnSpanishWord(place)
+                                    val updated = engine.learnSpanishWord(place)
                                     message = "Słówko zapamiętane!"
+                                    celebration = levelUpCelebration(progress.xp, updated.xp) ?: "SŁÓWKO ZAPAMIĘTANE!"
                                     screen = GameScreen.QUIZ
                                 }
                             },
@@ -374,11 +509,15 @@ private fun NataliaNaTropieApp() {
                                     selectedAnswer = index
                                     scope.launch {
                                         when (val result = engine.answerQuiz(place, index)) {
-                                            is QuizAnswerResult.TryAgain ->
+                                            is QuizAnswerResult.TryAgain -> {
                                                 message = "Spróbuj jeszcze raz."
+                                                celebration = "Hmm… SPRÓBUJ PONOWNIE"
+                                            }
                                             is QuizAnswerResult.Correct -> {
                                                 engine.earnBadge(place)
                                                 message = "Dobrze! Odznaka: ${place.badge}"
+                                                celebration = levelUpCelebration(progress.xp, result.progress.xp)
+                                                    ?: "BRAWO! ODZNAKA ZDOBYTA"
                                                 screen = GameScreen.PASSPORT
                                             }
                                         }
@@ -398,6 +537,8 @@ private fun NataliaNaTropieApp() {
                     }
                 }
 
+                GameCelebration(celebration)
+
                 if (message.isNotBlank()) Text(message)
                 if (screen != GameScreen.HOME) {
                     Spacer(Modifier.height(4.dp))
@@ -409,6 +550,7 @@ private fun NataliaNaTropieApp() {
                         onDismissRequest = {
                             showParentDialog = false
                             parentAuthenticated = false
+                            parentQuestPending = false
                             parentPin = ""
                             pinConfirmation = ""
                             pinMessage = ""
@@ -417,16 +559,28 @@ private fun NataliaNaTropieApp() {
                         text = {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 if (parentAuthenticated) {
-                                    if (progress.pendingRewardRequests.isEmpty()) {
+                                    if (parentQuestPending) {
+                                        Text("Rodzicu, potwierdź wykonanie misji przez Natalię.")
+                                        Button(onClick = {
+                                            scope.launch {
+                                                if (finishQuest(parentConfirmed = true)) {
+                                                    parentQuestPending = false
+                                                    showParentDialog = false
+                                                    parentAuthenticated = false
+                                                }
+                                            }
+                                        }) { Text("POTWIERDZAM MISJĘ") }
+                                    } else if (progress.pendingRewardRequests.isEmpty()) {
                                         Text("Brak oczekujących próśb.")
                                     } else {
                                         progress.pendingRewardRequests.values.sortedBy { it.id }.forEach { request ->
-                                            Text("Nagroda za ${request.cost} ★")
+                                            Text("Lody za ${request.cost} ★")
                                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                                 TextButton(onClick = {
                                                     scope.launch {
                                                         val approved = progressRepository.approveRedemption(request.id)
                                                         message = if (approved) "Nagroda zatwierdzona." else "Nie można zatwierdzić tej prośby."
+                                                        if (approved) celebration = "ZDOBYŁAŚ LODY! 🎉"
                                                     }
                                                 }) { Text("ZATWIERDŹ") }
                                                 TextButton(onClick = {
@@ -483,6 +637,7 @@ private fun NataliaNaTropieApp() {
                             TextButton(onClick = {
                                 showParentDialog = false
                                 parentAuthenticated = false
+                                parentQuestPending = false
                                 parentPin = ""
                                 pinConfirmation = ""
                             }) { Text("ZAMKNIJ") }
@@ -494,12 +649,88 @@ private fun NataliaNaTropieApp() {
     }
 }
 
+@Composable
+private fun GameCelebration(message: String) {
+    AnimatedVisibility(
+        visible = message.isNotBlank(),
+        enter = fadeIn() + scaleIn(),
+    ) {
+        Card(Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            ) {
+                MangaBurst()
+                Text(if (message.startsWith("Hmm")) "🤔" else "😲", style = MaterialTheme.typography.headlineMedium)
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(message, style = MaterialTheme.typography.titleMedium)
+                    Text("✧  ★  ✧")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MangaBurst() {
+    Canvas(Modifier.height(64.dp).fillMaxWidth(.22f)) {
+        val center = Offset(size.width / 2f, size.height / 2f)
+        val inner = size.minDimension * .2f
+        val outer = size.minDimension * .48f
+        repeat(16) { index ->
+            val angle = Math.PI * 2.0 * index / 16.0
+            val dx = kotlin.math.cos(angle).toFloat()
+            val dy = kotlin.math.sin(angle).toFloat()
+            drawLine(Color(0xFFFFB703), Offset(center.x + dx * inner, center.y + dy * inner), Offset(center.x + dx * outer, center.y + dy * outer), 3f)
+        }
+        drawCircle(Color(0xFFFFD166), size.minDimension * .18f, center)
+    }
+}
+
+@Composable
+private fun LocalMap(place: Coordinates, user: Coordinates?, radiusMeters: Int) {
+    Canvas(Modifier.fillMaxWidth().height(190.dp)) {
+        drawRect(Color(0xFFE7F1E3))
+        val roadColor = Color(0xFFFCFCF7)
+        for (index in 1..4) {
+            val x = size.width * index / 5f
+            val y = size.height * index / 5f
+            drawLine(roadColor, Offset(x, 0f), Offset(x, size.height), 13f)
+            drawLine(roadColor, Offset(0f, y), Offset(size.width, y), 12f)
+        }
+        val target = Offset(size.width / 2f, size.height / 2f)
+        val metersPerPixel = 2.5
+        drawCircle(Color(0x55607D8B), radiusMeters / metersPerPixel.toFloat(), target)
+        drawCircle(Color(0xFF294C60), 11f, target)
+        drawCircle(Color.White, 4f, target)
+        if (user != null) {
+            val latitudeMeters = (user.latitude - place.latitude) * 111_320.0
+            val longitudeMeters = (user.longitude - place.longitude) * 111_320.0 * kotlin.math.cos(Math.toRadians(place.latitude))
+            val point = Offset(
+                target.x + (longitudeMeters / metersPerPixel).toFloat(),
+                target.y - (latitudeMeters / metersPerPixel).toFloat(),
+            )
+            if (point.x in 0f..size.width && point.y in 0f..size.height) {
+                drawCircle(Color.White, 12f, point)
+                drawCircle(Color(0xFF3186D5), 8f, point)
+            }
+        }
+    }
+}
+
 private fun nextGameScreen(progress: GameProgress, place: Place): GameScreen = when {
     place.id !in progress.discoveredPlaceIds -> GameScreen.PLACE
     place.quest.id !in progress.completedQuestIds -> GameScreen.QUEST
     place.id !in progress.completedWordIds -> GameScreen.WORD
     place.quiz.id !in progress.completedQuizIds -> GameScreen.QUIZ
     else -> GameScreen.PASSPORT
+}
+
+private fun levelUpCelebration(oldXp: Int, newXp: Int): String? {
+    val previous = PlayerLevel.forXp(oldXp)
+    val current = PlayerLevel.forXp(newXp)
+    return if (current.ordinal > previous.ordinal) "AWANS! ${current.title}" else null
 }
 
 @Composable
@@ -562,14 +793,14 @@ private fun DeveloperPanel(
                             com.tigstaking.natalia.game.RewardEvent(
                                 id = "debug-stars:${UUID.randomUUID()}",
                                 source = "DEBUG",
-                                stars = 10,
+                                stars = 100,
                             ),
                         )
-                        onMessage("Tryb deweloperski: dodano 10 ★.")
+                        onMessage("Tryb deweloperski: dodano 100 ★.")
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("DODAJ 10 ★ (DEBUG)") }
+            ) { Text("DODAJ 100 ★ (DEBUG)") }
             OutlinedButton(onClick = onCheckGps, modifier = Modifier.fillMaxWidth()) {
                 Text("SPRAWDŹ DIAGNOSTYKĘ GPS")
             }
