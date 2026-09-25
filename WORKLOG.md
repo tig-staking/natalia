@@ -18,7 +18,7 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 - GameEngine requires stages in order: discover, quest, Spanish word, quiz, then badge.
 - Progress rules include XP, stars, an idempotent reward ledger, levels, badge markers, reward redemption, and reset.
 - Preferences DataStore persists progress locally.
-- Reward redemption now supports a persistent request/approval flow: requested stars are reserved without being spent, approval spends them once, cancellation releases the reservation, and duplicate actions are idempotent.
+- Reward redemption supports a persistent request/approval flow: requested stars are reserved without being spent, approval spends them once, cancellation releases the reservation, and duplicate actions are idempotent.
 - Foreground one-shot Fused Location Provider checks coarse/fine permission, enabled location providers, and a fresh location. No background location or route history.
 - A Compose instrumentation smoke test launches the app and opens the Sagrada Família check-in screen.
 - GitHub Actions runs unit tests, compiles instrumentation test sources, builds a debug APK, and uploads that APK. Successful APK artifacts are retained for 14 days.
@@ -26,15 +26,15 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 
 ## Verification state
 
-- Last successful full unit-test and debug-APK run: commit `c72ed6131d02cdd7c42d320641e4f0ac96ec10c5`.
-- Previous verified artifact `natalia-debug-apk` (id `10860897629`) expires 2026-10-09.
-- On commit `3d42eb9386c1aceb12a919ce5b378d98ba533239`, application and test sources compiled, but the new DataStore test failed because it opened a second active store on the same file. The test now checks request persistence and approval within one repository instance; the existing repository test covers process-style recreation.
+- Green GitHub Actions run for commit `e7525e5fe1b5bbc100c2b3353d3fecc6cd547ecc`: unit tests, instrumentation test compilation, debug APK build, and artifact upload passed.
+- The run uploaded artifact `natalia-debug-apk` (id `10864602178`), available until 2026-10-09.
+- Tests verify reward request reservation, no spending before approval, idempotent approval, cancellation, ledger entries, and persistence behavior. The reward request test now checks the DataStore serialized flow without creating two live stores for the same file.
 - The emulator smoke test has compiled but has not run on a device. GitHub-hosted runs could not boot the configured emulator; CI avoids emulator startup while keeping the instrumentation compile check.
-- A fix commit is pending CI. No on-device GPS test has been run.
+- No on-device GPS test has been run.
 
 ## Known gaps to address
 
-1. Verify the reward request test and maintain green CI; run the Compose smoke test on an Android Studio emulator or connected Android device, then field-test GPS behavior on a physical phone.
+1. Run the Compose smoke test on an Android Studio emulator or connected Android device; then field-test GPS behavior on a physical phone.
 2. Add secure parent authentication with a 4-digit PIN stored as a salted hash using Android Keystore-backed secret material, and connect approval actions to the authenticated parent flow. Do not store a plain-text PIN.
 3. Finish a real Developer Mode: simulate/override location, unlock POI, complete stages, edit stars, force level, redeem reward, reset POI/all, create test POI at current location, and show GPS diagnostics. Current debug shortcut only simulates Sagrada discovery.
 4. Add onboarding, actual map/POI overview, location diagnostics, and recovery paths for permission denied, approximate location, disabled GPS, stale/unavailable fixes.
