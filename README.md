@@ -161,9 +161,11 @@ git push
 
 Nie należy używać hardcodowanych lokalnych ścieżek zależnych od konkretnego komputera.
 
-## Uruchomienie projektu
+## Uruchomienie i orientacja w kodzie
 
 Instrukcje klonowania, konfiguracji Android Studio, budowania APK i pracy na kilku komputerach znajdują się w [docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md). Krótko: `git clone`, otwórz katalog projektu w Android Studio, poczekaj na Gradle Sync i uruchom konfigurację `app`.
+
+Opis ról poszczególnych plików źródłowych i wskazówki, gdzie szukać typowych błędów, znajdują się w [docs/CODE_MAP.md](docs/CODE_MAP.md). Bieżący stan prac i następne kroki zapisujemy w [WORKLOG.md](WORKLOG.md).
 
 ## Bezpieczeństwo
 
