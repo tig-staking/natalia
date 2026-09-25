@@ -42,7 +42,7 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 - No on-device GPS test has been run.
 - Per-POI reset commit `eb2051888fd0edca324609b9fc8a5af68a644cb0` passed GitHub Actions run [36168049429](https://github.com/tig-staking/natalia/actions/runs/36168049429); APK artifact `10879655186` is available until 2026-10-09.
 - Spanish TTS commit `08a3853cc0f8a6e082f1a11332ad41256aa6ba1f` passed GitHub Actions run [36168758899](https://github.com/tig-staking/natalia/actions/runs/36168758899); APK artifact `10879981224` is available until 2026-10-09. No on-device TTS playback has been checked.
-- Parent dialog background-lock and PIN-field clearing were added in the current revision and await CI.
+- Parent background-lock and PIN-field clearing commit `7124b3508709def5e2cd0cd282385d85ca3660d3` passed GitHub Actions run [36169271214](https://github.com/tig-staking/natalia/actions/runs/36169271214); APK artifact `10880106916` is available until 2026-10-09.
 
 ## Known gaps to address
 
@@ -72,4 +72,4 @@ For local setup on another computer, follow [docs/LOCAL_DEVELOPMENT.md](docs/LOC
 
 ## Progress estimate
 
-Roughly 21% of the full MVP scope. The ordered engine, persistence, GPS rules, parent-gated reward accounting, device-local PIN-gated approval screen, GPS diagnostics, geofence scenarios, custom coordinate simulation, temporary current-location test POI, anti-farming per-POI reset, and Spanish TTS path are implemented. Runtime emulator/GPS/TTS validation, parent-flow device check, map, onboarding, and animations remain. Parent background-lock awaits CI. Re-estimate after each major verified milestone.
+Roughly 21% of the full MVP scope. The ordered engine, persistence, GPS rules, parent-gated reward accounting, device-local PIN-gated approval screen, GPS diagnostics, geofence scenarios, custom coordinate simulation, temporary current-location test POI, anti-farming per-POI reset, and Spanish TTS path are implemented. Runtime emulator/GPS/TTS validation, parent-flow device check, map, onboarding, and animations remain. Re-estimate after each major verified milestone.
