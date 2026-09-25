@@ -424,6 +424,9 @@ private fun DeveloperPanel(
     val scope = rememberCoroutineScope()
     var expanded by remember { mutableStateOf(false) }
     var confirmReset by remember { mutableStateOf(false) }
+    var latitudeInput by remember(place.id) { mutableStateOf(place.coordinates.latitude.toString()) }
+    var longitudeInput by remember(place.id) { mutableStateOf(place.coordinates.longitude.toString()) }
+    var accuracyInput by remember(place.id) { mutableStateOf("10") }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedButton(onClick = { expanded = !expanded }) { Text("Developer mode") }
         if (expanded) {
@@ -494,6 +497,44 @@ private fun DeveloperPanel(
                 }
             }
 
+            Text("Ręczna symulacja współrzędnych i dokładności")
+            TextField(
+                value = latitudeInput,
+                onValueChange = { latitudeInput = it },
+                label = { Text("Szerokość geograficzna") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                singleLine = true,
+            )
+            TextField(
+                value = longitudeInput,
+                onValueChange = { longitudeInput = it },
+                label = { Text("Długość geograficzna") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                singleLine = true,
+            )
+            TextField(
+                value = accuracyInput,
+                onValueChange = { accuracyInput = it },
+                label = { Text("Dokładność GPS w metrach") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                singleLine = true,
+            )
+            val overrideLatitude = latitudeInput.toDoubleOrNull()
+            val overrideLongitude = longitudeInput.toDoubleOrNull()
+            val overrideAccuracy = accuracyInput.toDoubleOrNull()
+            val overrideIsValid = overrideLatitude != null && overrideLatitude in -90.0..90.0 &&
+                overrideLongitude != null && overrideLongitude in -180.0..180.0 &&
+                overrideAccuracy != null && overrideAccuracy.isFinite() && overrideAccuracy >= 0.0
+            OutlinedButton(
+                enabled = overrideIsValid,
+                onClick = {
+                    val latitude = overrideLatitude ?: return@OutlinedButton
+                    val longitude = overrideLongitude ?: return@OutlinedButton
+                    val accuracy = overrideAccuracy ?: return@OutlinedButton
+                    simulateLocation(Coordinates(latitude, longitude), accuracy)
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("SPRAWDŹ PODANE WSPÓŁRZĘDNE") }
             OutlinedButton(
                 onClick = { simulateLocation(place.coordinates, 10.0) },
                 modifier = Modifier.fillMaxWidth(),
