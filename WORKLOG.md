@@ -33,7 +33,7 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 - Green GitHub Actions run for code commit `c3c8e73d868721675463903250f2acd7c4e6f92b`: unit tests, instrumentation test compilation, debug APK build, and artifact upload passed. Documentation-only commit `4897bd830a7a7759b5143b442d0e0989733bc516` also passed.
 - Parent PIN and Compose approval UI commit `2ca9bd0702be2504cd7dc2ab7576204b519c8628` passed GitHub Actions run [36155555226](https://github.com/tig-staking/natalia/actions/runs/36155555226): unit tests, instrumentation source compilation, debug APK build, and artifact upload. APK artifact `10873641102` is available until 2026-10-09.
 - Developer Mode stage controls commit `20e51519a681110ab3e480ac825fb29b7f5ae3ad` passed GitHub Actions run [36156150073](https://github.com/tig-staking/natalia/actions/runs/36156150073): unit tests, instrumentation source compilation, debug APK build, and artifact upload. APK artifact `10873961581` is available until 2026-10-09.
-- The first CI run for GPS diagnostics (36160340582) caught a missing `Context` import; this is fixed in the follow-up commit, whose CI is pending.
+- The first CI run for GPS diagnostics (36160340582) caught a missing `Context` import. Follow-up commit `20fd9c3cbc1bbc009b93bd8bfcdd4d1916fb6603` fixed it and passed GitHub Actions run [36160595010](https://github.com/tig-staking/natalia/actions/runs/36160595010); APK artifact `10875501283` is available until 2026-10-09.
 - CI passed for the parent PIN and Developer Mode changes. The emulator smoke test still only compiles in hosted CI; no runtime emulator or physical-device GPS test has been run.
 - The run uploaded artifact `natalia-debug-apk` (id `10864448021`), available until 2026-10-09.
 - Tests cover reward request reservation, no spending before approval, idempotent approval, cancellation, ledger entries, and persistence of pending requests after repository recreation.
@@ -44,8 +44,8 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 
 1. Run the Compose smoke test on an Android Studio emulator or connected Android device; then field-test GPS behavior on a physical phone.
 2. Verify the new parent PIN and approval flow on a device. Add focused coverage for PIN lockout and approval UI. The credential is intentionally per-device; parent PIN setup must be repeated after installing on another device.
-3. Finish Developer Mode: simulate/override coordinates and location quality, reset a single POI, and create a test POI at current location. Debug builds can already advance ordered stages, add stars, force the next level, spend test stars, reset all progress with confirmation, and inspect GPS diagnostics.
-4. Add onboarding, actual map/POI overview, location diagnostics, and recovery paths for permission denied, approximate location, disabled GPS, stale/unavailable fixes.
+3. Finish Developer Mode: simulate/override coordinates and location quality, reset a single POI, and create a test POI at current location. Debug builds can already advance ordered stages, add stars, force the next level, spend test stars, reset all progress with confirmation, and inspect GPS permissions, providers, and fresh-fix accuracy/age.
+4. Add onboarding and an actual map/POI overview. Exercise recovery paths for permission denied, approximate location, disabled GPS, and stale/unavailable fixes on real devices.
 5. Add Spanish TextToSpeech using `es-ES`, handling unavailable TTS without crashing.
 6. Add required celebration/avatar/level-up/badge animations after the functional game flow works.
 7. Keep documentation aligned with the real build and test commands. Continue to keep only Sagrada Família in the City Pack until the engine passes the MVP flow.
@@ -68,4 +68,4 @@ For local setup on another computer, follow [docs/LOCAL_DEVELOPMENT.md](docs/LOC
 
 ## Progress estimate
 
-Roughly 18% of the full MVP scope. The ordered engine, persistence, GPS rules, parent-gated reward accounting, device-local PIN-gated approval screen, and core debug progression controls are implemented. The latest GPS diagnostics and Developer Mode change is awaiting CI. Runtime emulator/GPS validation, location override and test POI tools, map, onboarding, audio, and animations remain. Re-estimate after each major verified milestone.
+Roughly 18% of the full MVP scope. The ordered engine, persistence, GPS rules, parent-gated reward accounting, device-local PIN-gated approval screen, GPS diagnostics, and core debug progression controls are implemented and CI builds successfully. Runtime emulator/GPS validation, location override and test POI tools, map, onboarding, audio, and animations remain. Re-estimate after each major verified milestone.
