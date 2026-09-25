@@ -15,8 +15,8 @@ import org.json.JSONArray
 
 private val Context.gameProgressDataStore: DataStore<Preferences> by preferencesDataStore(name = "game_progress")
 
-class GameProgressRepository(context: Context) {
-    private val dataStore = context.applicationContext.gameProgressDataStore
+class GameProgressRepository(private val dataStore: DataStore<Preferences>) {
+    constructor(context: Context) : this(context.applicationContext.gameProgressDataStore)
 
     val progress: Flow<GameProgress> = dataStore.data.map(::decode)
 
