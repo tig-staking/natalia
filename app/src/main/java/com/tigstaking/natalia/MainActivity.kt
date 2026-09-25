@@ -46,6 +46,7 @@ import androidx.core.content.ContextCompat
 import android.content.pm.PackageManager
 import com.tigstaking.natalia.game.CityPackRepository
 import com.tigstaking.natalia.game.GameEngine
+import com.tigstaking.natalia.game.DebugTestPoi
 import com.tigstaking.natalia.game.GameProgress
 import com.tigstaking.natalia.game.GameProgressRepository
 import com.tigstaking.natalia.game.Coordinates
@@ -78,7 +79,26 @@ private fun NataliaNaTropieApp() {
     val progressRepository = remember(context) { GameProgressRepository(context) }
     val parentPinStore = remember(context) { ParentPinStore(context) }
     val engine = remember(progressRepository) { GameEngine(progressRepository) }
-    var place by remember(context) { mutableStateOf(CityPackRepository(context).loadBarcelona().places.first()) }
+    val basePlace = remember(context) { CityPackRepository(context).loadBarcelona().places.first() }
+    val savedTestPoi by progressRepository.debugTestPoi.collectAsState(initial = null)
+    val place = remember(basePlace, savedTestPoi) {
+        savedTestPoi?.let { testPoi ->
+            basePlace.copy(
+                id = testPoi.id,
+                name = "Testowy punkt",
+                coordinates = testPoi.coordinates,
+                geofenceRadiusMeters = 120,
+                intro = "To testowy punkt GPS utworzony na bieżącej pozycji.",
+                fact = "Wróć do tego miejsca, aby sprawdzić odblokowanie misji.",
+                quest = basePlace.quest.copy(
+                    id = "${testPoi.id}-quest",
+                    prompt = "Rozejrzyj się dookoła i potwierdź, że jesteś w pobliżu punktu.",
+                ),
+                quiz = basePlace.quiz.copy(id = "${testPoi.id}-quiz"),
+                badge = "ODKRYWCA TESTOWEGO PUNKTU",
+            )
+        } ?: basePlace
+    }
     val locationProvider = remember(context) { FusedLocationProvider(context) }
     val spanishSpeech = remember(context) { SpanishSpeechController(context) }
     val speechStatus by spanishSpeech.status.collectAsState()
@@ -113,16 +133,10 @@ private fun NataliaNaTropieApp() {
         try {
             val location = locationProvider.currentLocation()
             val testId = "debug-${UUID.randomUUID()}"
-            place = place.copy(
-                id = testId,
-                name = "Testowy punkt",
-                coordinates = location.coordinates,
-                geofenceRadiusMeters = 25,
-                quest = place.quest.copy(id = "$testId-quest"),
-                quiz = place.quiz.copy(id = "$testId-quiz"),
-            )
+            progressRepository.saveDebugTestPoi(DebugTestPoi(testId, location.coordinates))
             screen = GameScreen.PLACE
-            message = "Utworzono tymczasowy punkt testowy w bieżącej lokalizacji (±${location.accuracyMeters.toInt()} m)."
+            message = "Utworzono punkt GPS zapisany na tym urządzeniu, promień 120 m (±${location.accuracyMeters.toInt()} m)."
+
         } catch (error: Exception) {
             message = "Nie utworzono punktu testowego. Sprawdź uprawnienie i diagnostykę GPS."
         }
@@ -219,12 +233,12 @@ private fun NataliaNaTropieApp() {
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Text("NATALIA NA TROPIE", style = MaterialTheme.typography.headlineMedium)
-                Text("Barcelona · Sagrada Família")
+                Text("Barcelona · ${place.name}")
                 Card(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text("${level.title} · Poziom ${PlayerLevel.entries.indexOf(level) + 1}")
                         Text("${progress.xp} XP     ★ ${progress.stars}")
-                        Text("Paszport: ${if (place.id in progress.discoveredPlaceIds) "Sagrada Família ✓" else "czeka na pierwsze odkrycie"}")
+                        Text("Paszport: ${if (place.id in progress.discoveredPlaceIds) "${place.name} ✓" else "czeka na pierwsze odkrycie"}")
                     }
                 }
 
@@ -261,6 +275,14 @@ private fun NataliaNaTropieApp() {
                                 gpsDiagnostic = gpsDiagnostic,
                                 onCheckGps = { scope.launch { diagnoseGps() } },
                                 onCreateTestPoi = { scope.launch { createTestPoi() } },
+                                hasDebugTestPoi = savedTestPoi != null,
+                                onClearTestPoi = {
+                                    scope.launch {
+                                        progressRepository.clearDebugTestPoi()
+                                        screen = GameScreen.HOME
+                                        message = "Usunięto testowy punkt GPS; zapisany postęp gry pozostał."
+                                    }
+                                },
                                 onOpen = { updated -> screen = nextGameScreen(updated, place) },
                             )
                         }
@@ -460,6 +482,8 @@ private fun DeveloperPanel(
     gpsDiagnostic: String,
     onCheckGps: () -> Unit,
     onCreateTestPoi: () -> Unit,
+    hasDebugTestPoi: Boolean,
+    onClearTestPoi: () -> Unit,
     onOpen: (GameProgress) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -522,6 +546,11 @@ private fun DeveloperPanel(
             if (gpsDiagnostic.isNotBlank()) Text(gpsDiagnostic)
             OutlinedButton(onClick = onCreateTestPoi, modifier = Modifier.fillMaxWidth()) {
                 Text("UTWÓRZ TESTOWY PUNKT TU, GDZIE JESTEM")
+            }
+            if (hasDebugTestPoi) {
+                OutlinedButton(onClick = onClearTestPoi, modifier = Modifier.fillMaxWidth()) {
+                    Text("USUŃ TESTOWY PUNKT")
+                }
             }
 
             fun simulateLocation(coordinates: Coordinates, accuracyMeters: Double) {

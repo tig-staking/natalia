@@ -119,6 +119,21 @@ enum class PlayerLevel(val title: String, val minXp: Int) {
 
 data class Coordinates(val latitude: Double, val longitude: Double)
 
+data class DebugTestPoi(
+    val id: String,
+    val coordinates: Coordinates,
+) {
+    init {
+        require(id.isNotBlank()) { "Test POI id must not be blank" }
+        require(coordinates.latitude.isFinite() && coordinates.latitude in -90.0..90.0) {
+            "Test POI latitude is out of range"
+        }
+        require(coordinates.longitude.isFinite() && coordinates.longitude in -180.0..180.0) {
+            "Test POI longitude is out of range"
+        }
+    }
+}
+
 sealed interface ProximityResult {
     data class Inside(val distanceMeters: Double) : ProximityResult
     data class Outside(val distanceMeters: Double) : ProximityResult

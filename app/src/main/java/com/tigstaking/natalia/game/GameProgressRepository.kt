@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
@@ -19,6 +20,30 @@ class GameProgressRepository(private val dataStore: DataStore<Preferences>) {
     constructor(context: Context) : this(context.applicationContext.gameProgressDataStore)
 
     val progress: Flow<GameProgress> = dataStore.data.map(::decode)
+
+    val debugTestPoi: Flow<DebugTestPoi?> = dataStore.data.map { preferences ->
+        val id = preferences[debugTestPoiIdKey]
+        val latitude = preferences[debugTestPoiLatitudeKey]
+        val longitude = preferences[debugTestPoiLongitudeKey]
+        if (id == null || latitude == null || longitude == null) null
+        else runCatching { DebugTestPoi(id, Coordinates(latitude, longitude)) }.getOrNull()
+    }
+
+    suspend fun saveDebugTestPoi(testPoi: DebugTestPoi) {
+        dataStore.edit { preferences ->
+            preferences[debugTestPoiIdKey] = testPoi.id
+            preferences[debugTestPoiLatitudeKey] = testPoi.coordinates.latitude
+            preferences[debugTestPoiLongitudeKey] = testPoi.coordinates.longitude
+        }
+    }
+
+    suspend fun clearDebugTestPoi() {
+        dataStore.edit { preferences ->
+            preferences.remove(debugTestPoiIdKey)
+            preferences.remove(debugTestPoiLatitudeKey)
+            preferences.remove(debugTestPoiLongitudeKey)
+        }
+    }
 
     suspend fun awardOnce(event: RewardEvent): GameProgress {
         var result = GameProgress()
@@ -229,5 +254,8 @@ class GameProgressRepository(private val dataStore: DataStore<Preferences>) {
         val earnedBadgesKey = stringSetPreferencesKey("earned_badges")
         val redeemedRewardsKey = stringSetPreferencesKey("redeemed_rewards")
         val pendingRewardsKey = stringPreferencesKey("pending_rewards")
+        val debugTestPoiIdKey = stringPreferencesKey("debug_test_poi_id")
+        val debugTestPoiLatitudeKey = doublePreferencesKey("debug_test_poi_latitude")
+        val debugTestPoiLongitudeKey = doublePreferencesKey("debug_test_poi_longitude")
     }
 }
