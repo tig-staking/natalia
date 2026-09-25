@@ -57,6 +57,10 @@ data class CityPack(
     private fun validate() {
         require(schemaVersion == 1) { "Unsupported City Pack schema version: $schemaVersion" }
         require(id.isNotBlank() && name.isNotBlank()) { "City Pack id and name are required" }
+        require(mapCenter.latitude in -90.0..90.0 && mapCenter.longitude in -180.0..180.0) {
+            "City Pack map center is out of range"
+        }
+        require(defaultZoom > 0.0) { "Default map zoom must be positive" }
         require(places.map(Place::id).distinct().size == places.size) { "Place ids must be unique" }
     }
 }
@@ -85,6 +89,7 @@ data class Place(
         require(quiz.answers.size >= 2 && quiz.correctAnswerIndex in quiz.answers.indices) {
             "Quiz must have answers and a valid correct answer index"
         }
+        require(quiz.answers.all(String::isNotBlank)) { "Quiz answers must not be blank" }
         require(xp >= 0 && stars >= 0) { "Place rewards cannot be negative" }
     }
 }

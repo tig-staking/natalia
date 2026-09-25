@@ -71,14 +71,16 @@ data class Coordinates(val latitude: Double, val longitude: Double)
 
 object Proximity {
     fun distanceMeters(from: Coordinates, to: Coordinates): Double {
+        require(from.latitude in -90.0..90.0 && from.longitude in -180.0..180.0)
+        require(to.latitude in -90.0..90.0 && to.longitude in -180.0..180.0)
         val earthRadiusMeters = 6_371_000.0
         val lat1 = Math.toRadians(from.latitude)
         val lat2 = Math.toRadians(to.latitude)
         val deltaLat = lat2 - lat1
         val deltaLon = Math.toRadians(to.longitude - from.longitude)
-        val a = kotlin.math.sin(deltaLat / 2).let { it * it } +
+        val a = (kotlin.math.sin(deltaLat / 2).let { it * it } +
             kotlin.math.cos(lat1) * kotlin.math.cos(lat2) *
-            kotlin.math.sin(deltaLon / 2).let { it * it }
+            kotlin.math.sin(deltaLon / 2).let { it * it }).coerceIn(0.0, 1.0)
         return earthRadiusMeters * 2 * kotlin.math.atan2(kotlin.math.sqrt(a), kotlin.math.sqrt(1 - a))
     }
 
