@@ -40,10 +40,12 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 - Tests cover reward request reservation, no spending before approval, idempotent approval, cancellation, ledger entries, and persistence of pending requests after repository recreation.
 - The emulator smoke test has compiled but has not run on a device. GitHub-hosted runs could not boot the configured emulator; CI avoids emulator startup while keeping the instrumentation compile check.
 - No on-device GPS test has been run.
-- Test POI persistence and removal were added in the current revision and await CI. The local config stores only one test point, not a location trail; full reset removes it.
+- Persistent test POI creation, restoration, and removal passed GitHub Actions run [36170862095](https://github.com/tig-staking/natalia/actions/runs/36170862095). The local config stores only one test point, not a location trail; full reset removes it.
 - Per-POI reset commit `eb2051888fd0edca324609b9fc8a5af68a644cb0` passed GitHub Actions run [36168049429](https://github.com/tig-staking/natalia/actions/runs/36168049429); APK artifact `10879655186` is available until 2026-10-09.
 - Spanish TTS commit `08a3853cc0f8a6e082f1a11332ad41256aa6ba1f` passed GitHub Actions run [36168758899](https://github.com/tig-staking/natalia/actions/runs/36168758899); APK artifact `10879981224` is available until 2026-10-09. No on-device TTS playback has been checked.
 - Parent background-lock and PIN-field clearing commit `7124b3508709def5e2cd0cd282385d85ca3660d3` passed GitHub Actions run [36169271214](https://github.com/tig-staking/natalia/actions/runs/36169271214); APK artifact `10880106916` is available until 2026-10-09.
+
+- Test POI creation now requests foreground location permission when needed and reports distinct permission, disabled-services, and unavailable-fix errors; this permission-recovery path awaits CI.
 
 ## Known gaps to address
 
@@ -73,4 +75,4 @@ For local setup on another computer, follow [docs/LOCAL_DEVELOPMENT.md](docs/LOC
 
 ## Progress estimate
 
-Roughly 21% of the full MVP scope. The ordered engine, persistence, GPS rules, parent-gated reward accounting, device-local PIN-gated approval screen, GPS diagnostics, geofence scenarios, custom coordinate simulation, persistent device-local test POI, anti-farming per-POI reset, and Spanish TTS path are implemented. Runtime emulator/GPS/TTS validation, parent-flow device check, map, onboarding, and animations remain. Test POI persistence awaits CI. Re-estimate after each major verified milestone.
+Roughly 21% of the full MVP scope. The ordered engine, persistence, GPS rules, parent-gated reward accounting, device-local PIN-gated approval screen, GPS diagnostics, geofence scenarios, custom coordinate simulation, persistent device-local test POI, anti-farming per-POI reset, and Spanish TTS path are implemented. Runtime emulator/GPS/TTS validation, parent-flow device check, map, onboarding, and animations remain. The latest permission-recovery change is pending CI. Re-estimate after each major verified milestone.
