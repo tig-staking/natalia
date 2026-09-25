@@ -55,11 +55,12 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 - Level threshold crossings now change the celebration text to the new level title. Updated the Compose smoke test to handle onboarding and persisted progress across emulator runs.
 - Aligned the live reward request and Developer Mode star-grant action with the specified 100-star ice-cream reward.
 - Latest verification: `testDebugUnitTest compileDebugAndroidTestSources assembleDebug` passed after typed quest, animation, map, onboarding, and 100-star reward changes. Managed Pixel 2 API 35 emulator smoke test passed (1/1); this verifies app launch and place check-in UI, not actual GPS or the complete reward flow.
+- Added Android Keystore instrumentation coverage for PIN plaintext storage and five-attempt lockout. The latest managed Pixel 2 API 35 run passed both instrumentation tests (2/2).
 
 ## Known gaps to address
 
 1. Field-test GPS behavior, approximate/fine permissions, fresh-fix failures, and re-entry on a physical phone. Managed emulator smoke coverage passes but does not provide a physical GPS test.
-2. Verify the new parent PIN and approval flow on a device. Add focused coverage for PIN lockout and approval UI. The credential is intentionally per-device; parent PIN setup must be repeated after installing on another device.
+2. Verify the parent PIN setup and reward approval dialog on a physical device. PIN plaintext/lockout now has emulator instrumentation coverage. The credential is intentionally per-device; parent PIN setup must be repeated after installing on another device.
 3. Per-POI reset is implemented. Debug builds can create a device-local test POI at the current GPS location and restore it after restart, remove it without wiping other progress, simulate inside/outside/low-accuracy check-ins, enter custom coordinates and accuracy, advance ordered stages, add stars, force the next level, spend test stars, reset one POI or all progress with confirmation, and inspect GPS permissions, providers, and fresh-fix accuracy/age. Single-POI reset keeps paid rewards and their event IDs so replay cannot farm XP/stars.
 4. Consider an offline geographic basemap; the current coordinate preview intentionally avoids map tiles and network requests. Onboarding is implemented. Exercise permission denied, approximate location, disabled GPS, and stale/unavailable fixes on real devices.
 5. Confirm installed `es-ES` voice and audio playback on a phone or emulator; the app handles missing TTS/voice.

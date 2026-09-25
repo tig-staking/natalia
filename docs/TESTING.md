@@ -11,4 +11,6 @@ GitHub Actions runs unit tests, compiles Android instrumentation test sources, b
 
 The unit tests cover reward accounting, star redemption, level thresholds, GPS proximity and accuracy, City Pack parsing, ordered game stages, and persisted progress. The emulator smoke test does not verify a real GPS fix; physical-device location behavior still needs a field test.
 
+Instrumentation coverage also checks the Android Keystore-backed parent PIN: it is not stored as plain text, five failed attempts trigger lockout, and the valid PIN works again after the lockout period.
+
 For local emulator testing, install Android SDK Platform 35 and use Android Studio's bundled JDK (JDK 17 or newer). See [Local development](LOCAL_DEVELOPMENT.md).
