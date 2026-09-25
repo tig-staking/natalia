@@ -44,4 +44,5 @@ dependencies {
     implementation("com.google.android.gms:play-services-location:21.4.0")
     debugImplementation("androidx.compose.ui:ui-tooling")
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
 }
