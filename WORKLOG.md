@@ -20,7 +20,7 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 - Preferences DataStore persists progress locally.
 - Reward redemption supports a persistent request/approval flow: requested stars are reserved without being spent, approval spends them once, cancellation releases the reservation, and duplicate actions are idempotent.
 - Home lets the player request a 10-star reward; a parent can review, approve, or reject pending requests in a PIN-gated dialog.
-- Parent PIN is configured on first use, checked as a keyed HMAC using a non-exportable Android Keystore key, and protected by a 30-second lockout after five failed attempts. The PIN itself is not persisted. The PIN credential is device-local; a new device or reinstall requires setup again.
+- Parent PIN is configured on first use, checked as a keyed HMAC using a non-exportable Android Keystore key, and protected by a 30-second lockout after five failed attempts. The PIN itself is not persisted. The PIN credential is device-local; a new device or reinstall requires setup again. The parent dialog is intended to close and lock when the app goes to the background.
 - Debug-only Developer Mode can advance one game stage at a time, add test stars, force the next level, spend test stars, reset one POI or all progress with confirmation, inspect permission/provider/fresh-fix GPS diagnostics, run inside/outside/low-accuracy simulated check-ins through `GameEngine.checkIn`, enter arbitrary validated coordinates/accuracy for a check-in simulation, and create a temporary test POI at the current GPS position. A single-POI reset clears completion markers but preserves the reward ledger/event IDs to prevent farming rewards by replay.
 - Check-in errors for missing permission, disabled location services, and unavailable fresh location are shown as actionable Polish messages.
 - The Spanish word stage can speak its word with the platform `es-ES` voice. The UI handles a missing engine/voice and releases TTS when the app screen is disposed.
@@ -41,7 +41,8 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 - The emulator smoke test has compiled but has not run on a device. GitHub-hosted runs could not boot the configured emulator; CI avoids emulator startup while keeping the instrumentation compile check.
 - No on-device GPS test has been run.
 - Per-POI reset commit `eb2051888fd0edca324609b9fc8a5af68a644cb0` passed GitHub Actions run [36168049429](https://github.com/tig-staking/natalia/actions/runs/36168049429); APK artifact `10879655186` is available until 2026-10-09.
-- Spanish TTS is the current code change and awaits CI; no on-device TTS playback has been checked.
+- Spanish TTS commit `08a3853cc0f8a6e082f1a11332ad41256aa6ba1f` passed GitHub Actions run [36168758899](https://github.com/tig-staking/natalia/actions/runs/36168758899); APK artifact `10879981224` is available until 2026-10-09. No on-device TTS playback has been checked.
+- Parent dialog background-lock and PIN-field clearing were added in the current revision and await CI.
 
 ## Known gaps to address
 
@@ -71,4 +72,4 @@ For local setup on another computer, follow [docs/LOCAL_DEVELOPMENT.md](docs/LOC
 
 ## Progress estimate
 
-Roughly 21% of the full MVP scope. The ordered engine, persistence, GPS rules, parent-gated reward accounting, device-local PIN-gated approval screen, GPS diagnostics, geofence scenarios, custom coordinate simulation, temporary current-location test POI, anti-farming per-POI reset, and Spanish TTS path are implemented. Runtime emulator/GPS/TTS validation, map, onboarding, and animations remain. TTS awaits CI. Re-estimate after each major verified milestone.
+Roughly 21% of the full MVP scope. The ordered engine, persistence, GPS rules, parent-gated reward accounting, device-local PIN-gated approval screen, GPS diagnostics, geofence scenarios, custom coordinate simulation, temporary current-location test POI, anti-farming per-POI reset, and Spanish TTS path are implemented. Runtime emulator/GPS/TTS validation, parent-flow device check, map, onboarding, and animations remain. Parent background-lock awaits CI. Re-estimate after each major verified milestone.

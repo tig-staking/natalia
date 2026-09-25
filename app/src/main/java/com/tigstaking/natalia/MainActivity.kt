@@ -27,6 +27,9 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -91,6 +94,20 @@ private fun NataliaNaTropieApp() {
     var pinConfirmation by remember { mutableStateOf("") }
     var pinMessage by remember { mutableStateOf("") }
     var gpsDiagnostic by remember { mutableStateOf("") }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) {
+                showParentDialog = false
+                parentAuthenticated = false
+                parentPin = ""
+                pinConfirmation = ""
+                pinMessage = ""
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     suspend fun createTestPoi() {
         try {
@@ -392,12 +409,18 @@ private fun NataliaNaTropieApp() {
                                                 pinMessage = "Wpisz ten sam 4-cyfrowy PIN w obu polach."
                                             } else if (parentPinStore.setPin(parentPin)) {
                                                 parentAuthenticated = true
+                                                parentPin = ""
+                                                pinConfirmation = ""
                                                 pinMessage = ""
                                             } else pinMessage = "Nie udało się zapisać PIN-u na tym urządzeniu."
                                         } else if (parentPinStore.verify(parentPin)) {
                                             parentAuthenticated = true
+                                            parentPin = ""
                                             pinMessage = ""
-                                        } else pinMessage = "Nieprawidłowy PIN lub chwilowa blokada."
+                                        } else {
+                                            parentPin = ""
+                                            pinMessage = "Nieprawidłowy PIN lub chwilowa blokada."
+                                        }
                                     }, modifier = Modifier.fillMaxWidth()) {
                                         Text(if (setup) "USTAW PIN I KONTYNUUJ" else "ODBLOKUJ")
                                     }
