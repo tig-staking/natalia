@@ -114,6 +114,7 @@ private fun NataliaNaTropieApp() {
     var pinConfirmation by remember { mutableStateOf("") }
     var pinMessage by remember { mutableStateOf("") }
     var gpsDiagnostic by remember { mutableStateOf("") }
+    var createTestPoiAfterPermission by remember { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -130,15 +131,21 @@ private fun NataliaNaTropieApp() {
     }
 
     suspend fun createTestPoi() {
+        message = "Pobieram GPS i tworzę testowy punkt…"
         try {
             val location = locationProvider.currentLocation()
             val testId = "debug-${UUID.randomUUID()}"
             progressRepository.saveDebugTestPoi(DebugTestPoi(testId, location.coordinates))
             screen = GameScreen.PLACE
             message = "Utworzono punkt GPS zapisany na tym urządzeniu, promień 120 m (±${location.accuracyMeters.toInt()} m)."
-
+        } catch (error: LocationPermissionRequiredException) {
+            message = "Brak zgody na lokalizację. Zezwól aplikacji na dostęp podczas używania."
+        } catch (error: LocationServicesDisabledException) {
+            message = "Lokalizacja urządzenia jest wyłączona. Włącz GPS i spróbuj ponownie."
+        } catch (error: CurrentLocationUnavailableException) {
+            message = "Nie ma jeszcze świeżej pozycji. Wyjdź na otwartą przestrzeń i spróbuj ponownie."
         } catch (error: Exception) {
-            message = "Nie utworzono punktu testowego. Sprawdź uprawnienie i diagnostykę GPS."
+            message = "Nie udało się utworzyć punktu. Sprawdź GPS i spróbuj ponownie."
         }
     }
 
@@ -208,8 +215,16 @@ private fun NataliaNaTropieApp() {
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { permissions ->
-        if (permissions.values.any { it }) scope.launch { checkIn() }
-        else message = "Zezwól na lokalizację podczas używania aplikacji, aby odkryć miejsce."
+        val permissionGranted = permissions.values.any { it }
+        if (createTestPoiAfterPermission) {
+            createTestPoiAfterPermission = false
+            if (permissionGranted) scope.launch { createTestPoi() }
+            else message = "Zezwól na lokalizację podczas używania aplikacji, aby utworzyć testowy punkt."
+        } else if (permissionGranted) {
+            scope.launch { checkIn() }
+        } else {
+            message = "Zezwól na lokalizację podczas używania aplikacji, aby odkryć miejsce."
+        }
     }
 
     fun requestCheckIn() {
@@ -221,6 +236,21 @@ private fun NataliaNaTropieApp() {
         else permissionLauncher.launch(
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
         )
+    }
+
+    fun requestCreateTestPoi() {
+        val fineGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
+        val coarseGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
+        if (fineGranted || coarseGranted) {
+            scope.launch { createTestPoi() }
+        } else {
+            createTestPoiAfterPermission = true
+            permissionLauncher.launch(
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+            )
+        }
     }
 
     val level = PlayerLevel.forXp(progress.xp)
@@ -274,7 +304,7 @@ private fun NataliaNaTropieApp() {
                                 onMessage = { message = it },
                                 gpsDiagnostic = gpsDiagnostic,
                                 onCheckGps = { scope.launch { diagnoseGps() } },
-                                onCreateTestPoi = { scope.launch { createTestPoi() } },
+                                onCreateTestPoi = ::requestCreateTestPoi,
                                 hasDebugTestPoi = savedTestPoi != null,
                                 onClearTestPoi = {
                                     scope.launch {
