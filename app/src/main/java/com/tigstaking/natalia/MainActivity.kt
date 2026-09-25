@@ -1,6 +1,7 @@
 package com.tigstaking.natalia
 
 import android.Manifest
+import android.content.Context
 import android.os.Bundle
 import android.location.LocationManager
 import androidx.activity.ComponentActivity
