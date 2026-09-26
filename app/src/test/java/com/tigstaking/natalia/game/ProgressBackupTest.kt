@@ -37,6 +37,16 @@ class ProgressBackupTest {
     }
 
     @Test
+    fun rejectsMalformedRedemptionLedgerEntry() {
+        val progress = GameProgress()
+            .applyOnce(RewardEvent("award", "TEST", stars = 10))
+            .redeemOnce("ice", 10)
+        val json = ProgressBackupCodec.encode(ProgressBackup(false, progress))
+            .replace("reward:ice", "bad-redemption")
+        assertThrows(IllegalArgumentException::class.java) { ProgressBackupCodec.decode(json) }
+    }
+
+    @Test
     fun exportDoesNotIncludeDeviceSpecificData() {
         val json = ProgressBackupCodec.encode(ProgressBackup(false, GameProgress()))
         assertFalse(json.contains("parentPin"))

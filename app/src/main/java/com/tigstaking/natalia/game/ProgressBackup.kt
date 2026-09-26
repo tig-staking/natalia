@@ -92,9 +92,12 @@ object ProgressBackupCodec {
         require(progress.ledger.sumOf { it.stars.toLong() } == stars.toLong()) { "Stars do not match the reward ledger." }
         val nonRedemptionEvents = progress.ledger.filter { it.source != "REWARD" }.map { it.eventId }.toSet()
         require(nonRedemptionEvents == progress.appliedEventIds) { "Applied events do not match the reward ledger." }
-        val ledgerRedemptions = progress.ledger.filter { it.source == "REWARD" }.mapNotNull { entry ->
-            entry.eventId.takeIf { it.startsWith("reward:") }?.removePrefix("reward:")
-        }.toSet()
+        val rewardEntries = progress.ledger.filter { it.source == "REWARD" }
+        require(rewardEntries.all { entry ->
+            entry.eventId.startsWith("reward:") && entry.eventId.removePrefix("reward:").isNotBlank() &&
+                entry.xp == 0 && entry.stars < 0
+        }) { "Invalid reward redemption in ledger." }
+        val ledgerRedemptions = rewardEntries.map { it.eventId.removePrefix("reward:") }.toSet()
         require(ledgerRedemptions == progress.redeemedRewardIds) { "Redeemed rewards do not match the reward ledger." }
         return ProgressBackup(root.getBoolean("onboardingCompleted"), progress)
     }
