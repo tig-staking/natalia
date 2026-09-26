@@ -4,6 +4,13 @@ Updated: 2026-09-26
 
 This file is the cross-computer handoff note. GitHub `main` is the source of truth. Read this file, [the code map](docs/CODE_MAP.md), and `PROJECT_SPEC.md` before continuing on another computer.
 
+## Visual direction milestone
+
+- Added `docs/DESIGN_SYSTEM.md` as the visual source of truth and `docs/CHARACTER_BRIEF.md` as the source of truth for Natalia's illustrated character. `AGENTS.md` now requires both documents before relevant UI/character work and explicitly keeps real reference photos out of Git.
+- Audited the current UI: screens and flows are functional but live mostly in one `MainActivity.kt`, use default Material 3 styling, direct screen state, a single scrolling column, emoji character placeholders, and several hardcoded map/celebration colors. No production theme/token/component layer exists yet.
+- Prepared three character concept previews from the private local references (Clean Anime, Manga Travel, Game Adventure) and three matching UI comparison boards covering Home, Map/Place, Quest/Quiz, and Passport/Reward. Generated previews remain outside Git pending selection.
+- Added `docs/UI_DIRECTIONS.md` with layouts, hierarchy, color/character/photo use, components, navigation, motion, strengths, limitations, age risk, Compose difficulty, mixable elements, and conflicts. No direction has been selected and no production UI has been replaced.
+
 ## Goal and working constraints
 
 Build the MVP game engine for **Natalia na tropie** around one City Pack entry, Sagrada Família. The target is a working Android app that can be cloned, built, installed, played offline, tested on a phone, and resumed without losing progress.
