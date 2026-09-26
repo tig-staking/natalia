@@ -60,6 +60,7 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 - Fixed onboarding restoration so a completed first-run flow returns to Home after process restart. Added animated XP/star counters and context-specific emoji reactions to the manga-burst celebration.
 - Re-ran the complete managed Pixel 2 API 35 instrumentation suite after onboarding/reward UI changes: `pixel2api35DebugAndroidTest` passed. This includes the smoke flow, Android Keystore PIN lockout, and child request → parent approval → one-time star debit UI test.
 - Map decision: keep game/check-in/progress fully offline and separate from the rendered map. The current coordinate preview downloads nothing. The future geographic basemap should stream the visible area online when connected and support an optional offline Barcelona pack. First measure whether the full city fits a 200 MB total budget at useful walking zoom; if it does, offer full-city offline download. If it exceeds the budget, reduce zoom or cover selected POI neighborhoods. Display estimate/progress and allow deleting packs. Use MapLibre with a provider whose terms permit offline packs. No provider is selected or map-tile download implemented yet.
+- Combined successful quiz completion, one-time XP/stars, and badge unlock in one DataStore transaction. This closes the process-death window in which the quiz was complete but the badge had not yet been written. The ordered-flow unit test now checks the badge in the quiz result itself.
 
 ## Known gaps to address
 

@@ -66,8 +66,13 @@ class GameProgressRepository(private val dataStore: DataStore<Preferences>) {
     suspend fun completeQuest(questId: String, xp: Int, stars: Int): GameProgress =
         awardStageOnce(RewardEvent("quest:$questId", "QUEST", xp, stars), completedQuestsKey, questId)
 
-    suspend fun completeQuiz(quizId: String, xp: Int, stars: Int): GameProgress =
-        awardStageOnce(RewardEvent("quiz:$quizId", "QUIZ", xp, stars), completedQuizzesKey, quizId)
+    suspend fun completeQuiz(quizId: String, placeId: String, xp: Int, stars: Int): GameProgress =
+        awardStageOnce(
+            RewardEvent("quiz:$quizId", "QUIZ", xp, stars),
+            completedQuizzesKey,
+            quizId,
+            badgeId = "badge:$placeId",
+        )
 
     suspend fun completeSpanishWord(placeId: String, xp: Int, stars: Int): GameProgress =
         awardStageOnce(RewardEvent("word:$placeId", "SPANISH", xp, stars), completedWordsKey, placeId)
@@ -172,8 +177,10 @@ class GameProgressRepository(private val dataStore: DataStore<Preferences>) {
         event: RewardEvent,
         markerKey: Preferences.Key<Set<String>>,
         markerId: String,
+        badgeId: String? = null,
     ): GameProgress {
         require(markerId.isNotBlank()) { "Progress id must not be blank" }
+        require(badgeId == null || badgeId.isNotBlank()) { "Badge id must not be blank" }
         var result = GameProgress()
         dataStore.edit { preferences ->
             val current = decode(preferences)
@@ -185,6 +192,7 @@ class GameProgressRepository(private val dataStore: DataStore<Preferences>) {
                 completedQuestIds = if (markerKey == completedQuestsKey) recorded else updated.completedQuestIds,
                 completedQuizIds = if (markerKey == completedQuizzesKey) recorded else updated.completedQuizIds,
                 completedWordIds = if (markerKey == completedWordsKey) recorded else updated.completedWordIds,
+                earnedBadgeIds = if (badgeId != null) updated.earnedBadgeIds + badgeId else updated.earnedBadgeIds,
             )
             encode(preferences, result)
         }

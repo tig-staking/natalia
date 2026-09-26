@@ -77,6 +77,7 @@ class GameEngine(private val progress: GameProgressRepository) {
         }
         return QuizAnswerResult.Correct(progress.completeQuiz(
             quizId = place.quiz.id,
+            placeId = place.id,
             xp = place.rewards.quiz.xp,
             stars = place.rewards.quiz.stars,
         ))

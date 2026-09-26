@@ -94,8 +94,9 @@ class GameEngineTest {
 
             val correctAnswer = engine.answerQuiz(place, place.quiz.correctAnswerIndex)
             assertTrue(correctAnswer is QuizAnswerResult.Correct)
-            engine.earnBadge(place)
-            engine.earnBadge(place)
+            assertTrue("Quiz and badge must be saved together", "badge:${place.id}" in
+                (correctAnswer as QuizAnswerResult.Correct).progress.earnedBadgeIds)
+            engine.answerQuiz(place, place.quiz.correctAnswerIndex)
 
             val completed = repository.progress.first()
             assertEquals(50, completed.xp)

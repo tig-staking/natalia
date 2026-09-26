@@ -522,7 +522,6 @@ private fun NataliaNaTropieApp() {
                                                 celebration = "Hmm… SPRÓBUJ PONOWNIE"
                                             }
                                             is QuizAnswerResult.Correct -> {
-                                                engine.earnBadge(place)
                                                 message = "Dobrze! Odznaka: ${place.badge}"
                                                 celebration = levelUpCelebration(progress.xp, result.progress.xp)
                                                     ?: "BRAWO! ODZNAKA ZDOBYTA"
@@ -789,8 +788,7 @@ private fun DeveloperPanel(
                             "MISJA" -> engine.completeQuest(place)
                             "SŁÓWKO" -> engine.learnSpanishWord(place)
                             "QUIZ I ODZNAKA" -> {
-                                engine.answerQuiz(place, place.quiz.correctAnswerIndex)
-                                engine.earnBadge(place)
+                                (engine.answerQuiz(place, place.quiz.correctAnswerIndex) as QuizAnswerResult.Correct).progress
                             }
                             else -> progress
                         }
