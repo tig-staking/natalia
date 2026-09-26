@@ -15,4 +15,6 @@ Instrumentation coverage also checks the Android Keystore-backed parent PIN: it 
 
 The Compose reward approval test provisions a 100-star balance, configures the parent PIN in the UI, requests the ice-cream reward, approves it as a parent, and verifies that the ledger records a single 100-star debit.
 
+The full-stage Compose test goes from onboarding through debug discovery, quest, Spanish word, a wrong and a correct quiz answer, and passport. It recreates the Activity and verifies that the earned badge and progress are still present. The managed Pixel 2 API 35 suite currently passes 4/4; physical GPS and a complete process-death check still need a phone.
+
 For local emulator testing, install Android SDK Platform 35 and use Android Studio's bundled JDK (JDK 17 or newer). See [Local development](LOCAL_DEVELOPMENT.md).

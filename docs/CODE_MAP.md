@@ -31,6 +31,9 @@ MainActivity (Compose screens and user actions)
 - `app/src/test/java/com/tigstaking/natalia/game/GameEngineTest.kt` — Ordered Sagrada flow, locked stages, and one-time payouts.
 - `app/src/test/java/com/tigstaking/natalia/game/GameProgressRepositoryTest.kt` — Persistence after repository recreation, reward approval, ledger, redemption, and reset.
 - `app/src/androidTest/java/com/tigstaking/natalia/HomeSmokeTest.kt` — Launches the app on an Android emulator, opens the Sagrada Família screen, and verifies the GPS check-in control.
+- `app/src/androidTest/java/com/tigstaking/natalia/CompleteFlowUiTest.kt` — Runs onboarding through discovery, quest, word, quiz, passport, and Activity recreation on the managed emulator.
+- `app/src/androidTest/java/com/tigstaking/natalia/RewardApprovalUiTest.kt` — Covers PIN setup, child reward request, parent approval, and one-time debit in the Compose UI.
+- `app/src/androidTest/java/com/tigstaking/natalia/ParentPinStoreInstrumentedTest.kt` — Checks Android Keystore storage and PIN lockout behavior.
 
 Add or update the test next to the behavior being changed. GitHub Actions runs unit tests, compiles the instrumentation test sources, and builds the debug APK. It does not boot the emulator in CI yet.
 
