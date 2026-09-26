@@ -22,6 +22,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.scaleIn
+import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -114,9 +116,9 @@ private fun NataliaNaTropieApp() {
     val speechStatus by spanishSpeech.status.collectAsState()
     DisposableEffect(spanishSpeech) { onDispose { spanishSpeech.close() } }
     val progress by progressRepository.progress.collectAsState(initial = GameProgress())
-    val onboardingCompleted by progressRepository.onboardingCompleted.collectAsState(initial = false)
+    val onboardingCompleted by progressRepository.onboardingCompleted.collectAsState(initial = null)
     val scope = rememberCoroutineScope()
-    var screen by remember { mutableStateOf(if (onboardingCompleted) GameScreen.HOME else GameScreen.ONBOARDING) }
+    var screen by remember { mutableStateOf(GameScreen.ONBOARDING) }
     var message by remember { mutableStateOf("") }
     var celebration by remember { mutableStateOf("") }
     var selectedAnswer by remember { mutableIntStateOf(-1) }
@@ -131,6 +133,9 @@ private fun NataliaNaTropieApp() {
     var mapLocationAfterPermission by remember { mutableStateOf(false) }
     var mapCoordinates by remember { mutableStateOf<Coordinates?>(null) }
     var mapAccuracy by remember { mutableStateOf<Double?>(null) }
+    LaunchedEffect(onboardingCompleted) {
+        if (onboardingCompleted == true && screen == GameScreen.ONBOARDING) screen = GameScreen.HOME
+    }
     LaunchedEffect(celebration) {
         if (celebration.isNotBlank()) {
             delay(1_400)
@@ -329,6 +334,8 @@ private fun NataliaNaTropieApp() {
     }
 
     val level = PlayerLevel.forXp(progress.xp)
+    val animatedXp by animateIntAsState(progress.xp, animationSpec = tween(650), label = "player-xp")
+    val animatedStars by animateIntAsState(progress.stars, animationSpec = tween(650), label = "player-stars")
     val nextScreen = nextGameScreen(progress, place)
 
     MaterialTheme {
@@ -342,7 +349,7 @@ private fun NataliaNaTropieApp() {
                 Card(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text("${level.title} · Poziom ${PlayerLevel.entries.indexOf(level) + 1}")
-                        Text("${progress.xp} XP     ★ ${progress.stars}")
+                        Text("$animatedXp XP     ★ $animatedStars")
                         Text("Paszport: ${if (place.id in progress.discoveredPlaceIds) "${place.name} ✓" else "czeka na pierwsze odkrycie"}")
                     }
                 }
@@ -396,6 +403,7 @@ private fun NataliaNaTropieApp() {
                         }
                     }
                     GameScreen.HOME -> {
+                        Text("🕵️‍♀️", style = MaterialTheme.typography.displayMedium)
                         Text("Cześć, Natalia! Twoja przygoda w Barcelonie czeka.")
                         Button(onClick = { screen = nextScreen }, modifier = Modifier.fillMaxWidth()) {
                             Text(if (place.id in progress.discoveredPlaceIds) "KONTYNUUJ PRZYGODĘ" else "POKAŻ MIEJSCE")
@@ -662,7 +670,13 @@ private fun GameCelebration(message: String) {
                 verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
             ) {
                 MangaBurst()
-                Text(if (message.startsWith("Hmm")) "🤔" else "😲", style = MaterialTheme.typography.headlineMedium)
+                val reaction = when {
+                    message.startsWith("Hmm") -> "🤔"
+                    message.contains("LODY") -> "🍦"
+                    message.startsWith("AWANS") -> "🤩"
+                    else -> "😄"
+                }
+                Text(reaction, style = MaterialTheme.typography.headlineMedium)
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(message, style = MaterialTheme.typography.titleMedium)
                     Text("✧  ★  ✧")

@@ -13,4 +13,6 @@ The unit tests cover reward accounting, star redemption, level thresholds, GPS p
 
 Instrumentation coverage also checks the Android Keystore-backed parent PIN: it is not stored as plain text, five failed attempts trigger lockout, and the valid PIN works again after the lockout period.
 
+The Compose reward approval test provisions a 100-star balance, configures the parent PIN in the UI, requests the ice-cream reward, approves it as a parent, and verifies that the ledger records a single 100-star debit.
+
 For local emulator testing, install Android SDK Platform 35 and use Android Studio's bundled JDK (JDK 17 or newer). See [Local development](LOCAL_DEVELOPMENT.md).
