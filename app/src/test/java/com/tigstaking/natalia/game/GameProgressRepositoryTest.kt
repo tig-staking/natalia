@@ -43,6 +43,38 @@ class GameProgressRepositoryTest {
     }
 
     @Test
+    fun backupImportRestoresProgressAndPreservesDeviceLocalTestPoi() = runBlocking {
+        val sourceDirectory = Files.createTempDirectory("natalia-backup-source").toFile()
+        val targetDirectory = Files.createTempDirectory("natalia-backup-target").toFile()
+        val sourceFile = File(sourceDirectory, "game_progress.preferences_pb")
+        val targetFile = File(targetDirectory, "game_progress.preferences_pb")
+        val source = newRepository(sourceFile)
+        val target = newRepository(targetFile)
+        try {
+            source.first.completeOnboarding()
+            source.first.discoverPlace("sagrada", xp = 20, stars = 120)
+            source.first.requestRedemptionOnce("ice-cream", 100)
+            source.first.approveRedemption("ice-cream")
+            val expected = source.first.progress.first()
+            val json = source.first.exportBackupJson()
+
+            target.first.discoverPlace("old-place", xp = 5, stars = 5)
+            val localPoi = DebugTestPoi("local-test", Coordinates(49.9, 18.7))
+            target.first.saveDebugTestPoi(localPoi)
+            target.first.importBackupJson(json)
+
+            assertEquals(true, target.first.onboardingCompleted.first())
+            assertEquals(expected, target.first.progress.first())
+            assertEquals(localPoi, target.first.debugTestPoi.first())
+        } finally {
+            source.second.cancel()
+            target.second.cancel()
+            sourceDirectory.deleteRecursively()
+            targetDirectory.deleteRecursively()
+        }
+    }
+
+    @Test
     fun rewardsAndLedgerSurviveRepositoryRecreationAndResetClearsThem() = runBlocking {
         val directory = Files.createTempDirectory("natalia-progress-test").toFile()
         val file = File(directory, "game_progress.preferences_pb")

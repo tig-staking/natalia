@@ -24,7 +24,7 @@ Debug builds need no signing setup. A release APK must use the same private keys
 3. Set these user environment variables before starting Android Studio or Gradle: `NATALIA_RELEASE_STORE_FILE` (absolute keystore path, use `/` separators on Windows), `NATALIA_RELEASE_STORE_PASSWORD`, `NATALIA_RELEASE_KEY_ALIAS`, and `NATALIA_RELEASE_KEY_PASSWORD`. Keep the keystore and passwords outside Git and do not send them in chat.
 4. Build with `./gradlew :app:assembleRelease` (Windows: `gradlew.bat :app:assembleRelease`). The build stops with a clear error if signing values or the keystore are missing.
 
-The phone currently has a debug-signed build. Android will not install a release-signed APK over it. Before switching signatures, export or otherwise preserve any progress that should survive the one-time reinstall; keep updating the current debug install from the same computer in the meantime.
+The phone currently has a debug-signed build. Android will not install a release-signed APK over it. The authenticated Parent Mode now offers **EKSPORTUJ POSTĘP** and **IMPORTUJ POSTĘP** using a versioned JSON backup. Before switching signatures, export the progress, reinstall the release build, configure the parent PIN again, and import the backup. Import replaces the destination's game progress and onboarding state after a fresh PIN check. The backup excludes the PIN and device-local test POI coordinates. Verify this transfer on a phone before the signature change, and keep updating the current debug install from the same computer in the meantime.
 
 ## Build and install
 

@@ -2,6 +2,7 @@ package com.tigstaking.natalia
 
 import android.Manifest
 import android.content.Context
+import android.net.Uri
 import android.os.Bundle
 import android.location.LocationManager
 import androidx.activity.ComponentActivity
@@ -61,6 +62,7 @@ import com.tigstaking.natalia.game.GameEngine
 import com.tigstaking.natalia.game.DebugTestPoi
 import com.tigstaking.natalia.game.GameProgress
 import com.tigstaking.natalia.game.GameProgressRepository
+import com.tigstaking.natalia.game.ProgressBackupCodec
 import com.tigstaking.natalia.game.Coordinates
 import com.tigstaking.natalia.game.Place
 import com.tigstaking.natalia.game.PlaceCheckInResult
@@ -76,6 +78,9 @@ import com.tigstaking.natalia.game.location.LocationServicesDisabledException
 import com.tigstaking.natalia.game.location.CurrentLocationUnavailableException
 import com.tigstaking.natalia.security.ParentPinStore
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 import java.util.UUID
 
 class MainActivity : ComponentActivity() {
@@ -135,6 +140,50 @@ private fun NataliaNaTropieApp() {
     var mapLocationAfterPermission by remember { mutableStateOf(false) }
     var mapCoordinates by remember { mutableStateOf<Coordinates?>(null) }
     var mapAccuracy by remember { mutableStateOf<Double?>(null) }
+    var pendingImportJson by remember { mutableStateOf<String?>(null) }
+    var importPin by remember { mutableStateOf("") }
+    var importError by remember { mutableStateOf("") }
+    val exportBackupLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri: Uri? ->
+        if (uri != null) scope.launch {
+            runCatching {
+                val json = withContext(Dispatchers.IO) { progressRepository.exportBackupJson() }
+                withContext(Dispatchers.IO) {
+                    context.contentResolver.openOutputStream(uri)?.bufferedWriter(Charsets.UTF_8)?.use { it.write(json) }
+                        ?: error("Nie można zapisać pliku.")
+                }
+            }.onSuccess { message = "Kopia postępu została zapisana." }
+                .onFailure { message = "Nie udało się zapisać kopii postępu." }
+        }
+    }
+    val importBackupLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+        if (uri != null) scope.launch {
+            runCatching {
+                withContext(Dispatchers.IO) {
+                    val input = context.contentResolver.openInputStream(uri) ?: error("Nie można odczytać pliku.")
+                    input.use { stream ->
+                        val output = ByteArrayOutputStream()
+                        val buffer = ByteArray(8192)
+                        var total = 0
+                        while (true) {
+                            val count = stream.read(buffer)
+                            if (count < 0) break
+                            total += count
+                            require(total <= 1_000_000) { "Plik kopii jest zbyt duży." }
+                            output.write(buffer, 0, count)
+                        }
+                        output.toString("UTF-8").also(ProgressBackupCodec::decode)
+                    }
+                }
+            }.onSuccess {
+                pendingImportJson = it
+                importPin = ""
+                importError = ""
+                showParentDialog = false
+                parentAuthenticated = false
+                parentPin = ""
+            }.onFailure { message = "Nieprawidłowa kopia postępu lub błąd odczytu pliku." }
+        }
+    }
     LaunchedEffect(onboardingCompleted) {
         if (onboardingCompleted == true && screen == GameScreen.ONBOARDING) screen = GameScreen.HOME
     }
@@ -592,6 +641,15 @@ private fun NataliaNaTropieApp() {
                                     val reservedForRewards = progress.pendingRewardRequests.values.sumOf { it.cost }
                                     Text("Stan Natalii: ${progress.xp} XP · ${progress.stars} ★")
                                     Text("Zarezerwowane na nagrody: $reservedForRewards ★")
+                                    Text("Kopia postępu nie zawiera PIN-u rodzica ani lokalizacji testowego punktu.")
+                                    OutlinedButton(
+                                        onClick = { exportBackupLauncher.launch("natalia-na-tropie-postep.json") },
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) { Text("EKSPORTUJ POSTĘP") }
+                                    OutlinedButton(
+                                        onClick = { importBackupLauncher.launch(arrayOf("application/json", "text/*")) },
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) { Text("IMPORTUJ POSTĘP") }
                                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                         TextButton(onClick = {
                                             scope.launch {
@@ -696,6 +754,48 @@ private fun NataliaNaTropieApp() {
                                 parentPin = ""
                                 pinConfirmation = ""
                             }) { Text("ZAMKNIJ") }
+                        },
+                    )
+                }
+                pendingImportJson?.let { backupJson ->
+                    AlertDialog(
+                        onDismissRequest = { pendingImportJson = null; importPin = ""; importError = "" },
+                        title = { Text("Zastąpić postęp?") },
+                        text = {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("Import zastąpi cały postęp gry na tym telefonie. PIN rodzica i lokalizacja testowego punktu nie są przenoszone.")
+                                TextField(
+                                    value = importPin,
+                                    onValueChange = { value -> if (value.length <= 4 && value.all(Char::isDigit)) importPin = value },
+                                    label = { Text("PIN rodzica") },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                                    singleLine = true,
+                                )
+                                if (importError.isNotBlank()) Text(importError)
+                            }
+                        },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                if (!parentPinStore.verify(importPin)) {
+                                    importPin = ""
+                                    importError = "Nieprawidłowy PIN lub chwilowa blokada."
+                                } else scope.launch {
+                                    runCatching { progressRepository.importBackupJson(backupJson) }
+                                        .onSuccess {
+                                            if (!ProgressBackupCodec.decode(backupJson).onboardingCompleted) {
+                                                screen = GameScreen.ONBOARDING
+                                            }
+                                            pendingImportJson = null
+                                            importPin = ""
+                                            importError = ""
+                                            message = "Postęp został zaimportowany."
+                                        }
+                                        .onFailure { importError = "Nie udało się zaimportować kopii."; importPin = "" }
+                                }
+                            }) { Text("ZASTĄP POSTĘP") }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { pendingImportJson = null; importPin = ""; importError = "" }) { Text("ANULUJ") }
                         },
                     )
                 }

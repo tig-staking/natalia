@@ -12,6 +12,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import org.json.JSONArray
 
@@ -25,6 +26,33 @@ class GameProgressRepository(private val dataStore: DataStore<Preferences>) {
 
     suspend fun completeOnboarding() {
         dataStore.edit { it[onboardingCompletedKey] = true }
+    }
+
+    suspend fun exportBackupJson(): String {
+        val preferences = dataStore.data.first()
+        return ProgressBackupCodec.encode(
+            ProgressBackup(preferences[onboardingCompletedKey] ?: false, decode(preferences)),
+        )
+    }
+
+    suspend fun importBackupJson(json: String) {
+        val backup = ProgressBackupCodec.decode(json)
+        dataStore.edit { preferences ->
+            preferences.remove(onboardingCompletedKey)
+            preferences.remove(xpKey)
+            preferences.remove(starsKey)
+            preferences.remove(appliedEventsKey)
+            preferences.remove(ledgerKey)
+            preferences.remove(discoveredPlacesKey)
+            preferences.remove(completedQuestsKey)
+            preferences.remove(completedQuizzesKey)
+            preferences.remove(completedWordsKey)
+            preferences.remove(earnedBadgesKey)
+            preferences.remove(redeemedRewardsKey)
+            preferences.remove(pendingRewardsKey)
+            preferences[onboardingCompletedKey] = backup.onboardingCompleted
+            encode(preferences, backup.progress)
+        }
     }
 
     val debugTestPoi: Flow<DebugTestPoi?> = dataStore.data.map { preferences ->
