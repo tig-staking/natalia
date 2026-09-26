@@ -102,10 +102,10 @@ internal fun StreetMap(
                     readyMap.uiSettings.isAttributionEnabled = true
                     readyMap.uiSettings.isCompassEnabled = true
                     readyMap.setStyle(OPENFREEMAP_STYLE) {
-                        readyMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(poi.latitude, poi.longitude), 15.0))
+                        readyMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(poi.latitude, poi.longitude), 14.0))
                         map = readyMap
                         styleLoaded = true
-                        mapMessage = "Mapa ulic gotowa"
+                        mapMessage = ""
                     }
                 }
                 mapView
@@ -115,14 +115,16 @@ internal fun StreetMap(
         if (!styleLoaded && mapMessage == "Mapa ulic wymaga połączenia z internetem.") {
             OfflineCoordinatePreview(poi, user, radiusMeters, Modifier.matchParentSize())
         }
-        Text(
-            text = mapMessage,
-            color = ComposeColor.White,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.align(Alignment.BottomCenter)
-                .background(ComposeColor(0xBB162238))
-                .padding(horizontal = 12.dp, vertical = 6.dp),
-        )
+        if (mapMessage.isNotBlank()) {
+            Text(
+                text = mapMessage,
+                color = ComposeColor.White,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.align(Alignment.BottomCenter)
+                    .background(ComposeColor(0xBB162238))
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+            )
+        }
     }
 
     LaunchedEffect(map, styleLoaded, poi, user, radiusMeters) {
@@ -133,7 +135,7 @@ internal fun StreetMap(
                 .addAll(geofencePolygon(poi, radiusMeters))
                 .fillColor(Color.rgb(80, 110, 255))
                 .strokeColor(Color.rgb(62, 86, 225))
-                .alpha(0.18f),
+                .alpha(0.08f),
         )
         readyMap.addMarker(
             MarkerOptions().position(LatLng(poi.latitude, poi.longitude)).title("Miejsce misji"),

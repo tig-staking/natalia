@@ -99,6 +99,13 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 - Requests have a 15-second timeout. A pure policy rejects invalid coordinates, missing/non-finite accuracy, readings older than 30 seconds, and timestamps implausibly in the future. Unit coverage is added; device permission and approximate-only checks still need a physical phone.
 - `testDebugUnitTest compileDebugAndroidTestSources assembleDebug` passes, and the full Pixel 2 API 35 `connectedDebugAndroidTest` suite passed 4/4 after this change.
 
+## Emulator visual QA — full player flow
+
+- Reviewed the installed debug build on the API 35 emulator at 1080×1920 / 420 dpi, including onboarding, Home, online map, place details, quest, Spanish word, quiz, completed passport/badge, and Rewards. The online map loaded, and the injected Sagrada location showed ±5 m accuracy. The complete player flow reached 50 XP / 50 stars and level 2; the 100-star reward was correctly disabled.
+- Readability was good at the emulator's default display size. The fixed bottom navigation stays clear, screen changes now return to the top, and the passport/reward screens expose their primary information without clipped text. Physical-device GPS remains covered by the user's earlier successful phone check, not this emulator run.
+- Polished the map after visual inspection: removed the persistent success toast, zoomed out one level to show more context, and reduced geofence fill opacity. Also improved status/navigation bar icon contrast, removed the irrelevant Home button from onboarding, compacted the map distance/accuracy summary, and tinted the selected bottom-navigation item with the approved coral accent.
+- Build including these changes: `assembleDebug` passed. Emulator flow was manually driven; no test suite was run in this visual-only pass. Temporary screenshots/XML are local QA artifacts and must not be committed.
+
 ## Known gaps to address
 
 1. The user confirmed the main phone flow: test POI check-in, quest, Spanish TTS, quiz retry, parent approval, and restart all worked. Still check approximate location, denied permission, disabled services, poor fixes, and leaving/re-entering a test POI.

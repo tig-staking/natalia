@@ -66,6 +66,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Offset
 import kotlinx.coroutines.delay
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import android.content.pm.PackageManager
 import com.tigstaking.natalia.game.CityPackRepository
 import com.tigstaking.natalia.game.GameEngine
@@ -96,6 +97,10 @@ import java.util.UUID
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            isAppearanceLightStatusBars = true
+            isAppearanceLightNavigationBars = true
+        }
         setContent { NataliaNaTropieApp() }
     }
 }
@@ -409,12 +414,16 @@ private fun NataliaNaTropieApp() {
     val animatedXp by animateIntAsState(progress.xp, animationSpec = tween(650), label = "player-xp")
     val animatedStars by animateIntAsState(progress.stars, animationSpec = tween(650), label = "player-stars")
     val nextScreen = nextGameScreen(progress, place)
+    val screenScrollState = rememberScrollState()
+    LaunchedEffect(screen) {
+        screenScrollState.scrollTo(0)
+    }
 
     NataliaTheme {
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             Column(Modifier.fillMaxSize()) {
               Column(
-                modifier = Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 16.dp),
+                modifier = Modifier.weight(1f).fillMaxWidth().verticalScroll(screenScrollState).padding(horizontal = 20.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
               ) {
                 if (screen != GameScreen.ONBOARDING) {
@@ -485,15 +494,24 @@ private fun NataliaNaTropieApp() {
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text("${place.name} · $mapStatus", style = MaterialTheme.typography.titleMedium)
                                 StreetMap(place.coordinates, mapCoordinates, place.geofenceRadiusMeters)
-                                Text("Mapa online: OpenFreeMap · dane OpenStreetMap")
-                                Text(place.name)
-                                Text("Punkt: ${"%.5f".format(place.coordinates.latitude)}, ${"%.5f".format(place.coordinates.longitude)}")
+                                Text("Mapa online · dane OpenStreetMap", style = MaterialTheme.typography.bodyMedium, color = NataliaPalette.Muted)
                                 val userPoint = mapCoordinates
                                 if (userPoint != null) {
                                     val distance = com.tigstaking.natalia.game.Proximity.distanceMeters(userPoint, place.coordinates)
-                                    Text("Twoja pozycja: ${"%.5f".format(userPoint.latitude)}, ${"%.5f".format(userPoint.longitude)}")
-                                    Text("Odległość: ${distance.toInt()} m · dokładność ±${mapAccuracy?.toInt() ?: "?"} m")
-                                } else Text("Twoja pozycja nie jest jeszcze dostępna.")
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.surfaceVariant,
+                                        shape = RoundedCornerShape(14.dp),
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) {
+                                        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                            Text(
+                                                if (distance <= place.geofenceRadiusMeters) "Jesteś w pobliżu miejsca" else "Odległość do miejsca: ${distance.toInt()} m",
+                                                style = MaterialTheme.typography.titleMedium,
+                                            )
+                                            Text("Dokładność GPS ±${mapAccuracy?.toInt() ?: "?"} m", style = MaterialTheme.typography.bodyMedium, color = NataliaPalette.Muted)
+                                        }
+                                    }
+                                } else Text("Twoja pozycja nie jest jeszcze dostępna.", style = MaterialTheme.typography.bodyMedium)
                             }
                         }
                         OutlinedButton(onClick = ::requestMapLocation, modifier = Modifier.fillMaxWidth()) {
@@ -747,7 +765,7 @@ private fun NataliaNaTropieApp() {
                 GameCelebration(celebration)
 
                 if (message.isNotBlank()) Text(message)
-                if (screen != GameScreen.HOME) {
+                if (screen != GameScreen.HOME && screen != GameScreen.ONBOARDING) {
                     Spacer(Modifier.height(4.dp))
                     OutlinedButton(onClick = { screen = GameScreen.HOME }) { Text("STRONA GŁÓWNA") }
                 }
