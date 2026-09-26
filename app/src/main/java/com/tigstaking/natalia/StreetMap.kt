@@ -1,6 +1,5 @@
 package com.tigstaking.natalia
 
-import android.graphics.Color
 import android.os.Bundle
 import android.view.ViewGroup
 import androidx.compose.foundation.Canvas
@@ -21,32 +20,52 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color as ComposeColor
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.tigstaking.natalia.game.Coordinates
+import com.tigstaking.natalia.game.Proximity
 import org.maplibre.android.MapLibre
-import org.maplibre.android.annotations.MarkerOptions
-import org.maplibre.android.annotations.PolygonOptions
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
+import org.maplibre.android.style.layers.CircleLayer
+import org.maplibre.android.style.layers.FillLayer
+import org.maplibre.android.style.layers.PropertyFactory.circleColor
+import org.maplibre.android.style.layers.PropertyFactory.circleRadius
+import org.maplibre.android.style.layers.PropertyFactory.circleStrokeColor
+import org.maplibre.android.style.layers.PropertyFactory.circleStrokeWidth
+import org.maplibre.android.style.layers.PropertyFactory.fillColor
+import org.maplibre.android.style.layers.PropertyFactory.fillOpacity
+import org.maplibre.android.style.layers.PropertyFactory.fillOutlineColor
+import org.maplibre.android.style.sources.GeoJsonSource
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlinx.coroutines.delay
 
-private const val OPENFREEMAP_STYLE = "https://tiles.openfreemap.org/styles/positron"
+private const val OPENFREEMAP_STYLE = "https://tiles.openfreemap.org/styles/liberty"
+
+internal data class JourneyMapStop(
+    val number: Int,
+    val name: String,
+    val coordinates: Coordinates,
+    val state: String,
+    val color: Int,
+)
 
 @Composable
 internal fun StreetMap(
     poi: Coordinates,
     user: Coordinates?,
     radiusMeters: Int,
+    stops: List<JourneyMapStop>,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -65,6 +84,7 @@ internal fun StreetMap(
     var map by remember(mapView) { mutableStateOf<MapLibreMap?>(null) }
     var styleLoaded by remember(mapView) { mutableStateOf(false) }
     var mapMessage by remember(mapView) { mutableStateOf("Ładowanie mapy ulic…") }
+    var stopScreenPoints by remember(mapView) { mutableStateOf(emptyList<Offset>()) }
 
     LaunchedEffect(mapView, styleLoaded) {
         if (!styleLoaded) {
@@ -102,7 +122,7 @@ internal fun StreetMap(
                     readyMap.uiSettings.isAttributionEnabled = true
                     readyMap.uiSettings.isCompassEnabled = true
                     readyMap.setStyle(OPENFREEMAP_STYLE) {
-                        readyMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(poi.latitude, poi.longitude), 14.0))
+                        readyMap.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(poi.latitude, poi.longitude), 14.7))
                         map = readyMap
                         styleLoaded = true
                         mapMessage = ""
@@ -125,27 +145,90 @@ internal fun StreetMap(
                     .padding(horizontal = 12.dp, vertical = 6.dp),
             )
         }
+        Canvas(modifier = Modifier.matchParentSize()) {
+            stops.zip(stopScreenPoints).forEach { (stop, point) ->
+                if (point.x !in 0f..size.width || point.y !in 0f..size.height) return@forEach
+                val center = point
+                val radius = 21.dp.toPx()
+                drawCircle(ComposeColor.White, radius = radius + 4.dp.toPx(), center = center)
+                drawCircle(ComposeColor(0xFFFF786B), radius = radius, center = center)
+                drawCircle(ComposeColor.White, radius = radius - 5.dp.toPx(), center = center, style = Stroke(width = 2.dp.toPx()))
+                drawContext.canvas.nativeCanvas.drawText(
+                    stop.number.toString().padStart(2, '0'),
+                    center.x,
+                    center.y + 5.dp.toPx(),
+                    android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                        color = android.graphics.Color.rgb(38, 51, 71)
+                        textAlign = android.graphics.Paint.Align.CENTER
+                        textSize = 12.dp.toPx()
+                        typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
+                    },
+                )
+            }
+        }
     }
 
-    LaunchedEffect(map, styleLoaded, poi, user, radiusMeters) {
+    LaunchedEffect(map, styleLoaded, poi, user, radiusMeters, stops) {
         val readyMap = map?.takeIf { styleLoaded } ?: return@LaunchedEffect
-        readyMap.clear()
-        readyMap.addPolygon(
-            PolygonOptions()
-                .addAll(geofencePolygon(poi, radiusMeters))
-                .fillColor(Color.rgb(80, 110, 255))
-                .strokeColor(Color.rgb(62, 86, 225))
-                .alpha(0.08f),
+        val style = readyMap.style ?: return@LaunchedEffect
+        listOf("natalia-route-stop-circles", "natalia-route-stops", "natalia-gps-dot", "natalia-gps", "natalia-geofence-fill", "natalia-geofence").forEach { id ->
+            style.removeLayer(id)
+            style.removeSource(id)
+        }
+        style.addSource(GeoJsonSource("natalia-geofence", geofenceFeature(poi, radiusMeters)))
+        style.addLayer(
+            FillLayer("natalia-geofence-fill", "natalia-geofence").withProperties(
+                fillColor(android.graphics.Color.rgb(111, 97, 237)),
+                fillOpacity(0.11f),
+                fillOutlineColor(android.graphics.Color.rgb(90, 75, 220)),
+            ),
         )
-        readyMap.addMarker(
-            MarkerOptions().position(LatLng(poi.latitude, poi.longitude)).title("Miejsce misji"),
-        )
-        user?.let { location ->
-            readyMap.addMarker(
-                MarkerOptions().position(LatLng(location.latitude, location.longitude)).title("Twoja pozycja GPS"),
+        user?.takeIf { Proximity.distanceMeters(it, poi) > 25.0 }?.let { location ->
+            style.addSource(GeoJsonSource("natalia-gps", pointFeature(location)))
+            style.addLayer(
+                CircleLayer("natalia-gps-dot", "natalia-gps").withProperties(
+                    circleRadius(10f),
+                    circleColor(android.graphics.Color.rgb(42, 130, 224)),
+                    circleStrokeColor(android.graphics.Color.WHITE),
+                    circleStrokeWidth(3f),
+                ),
             )
         }
     }
+
+    DisposableEffect(map, styleLoaded, stops) {
+        val readyMap = map?.takeIf { styleLoaded }
+        if (readyMap == null) {
+            stopScreenPoints = emptyList()
+            onDispose {}
+        } else {
+            fun updateStopScreenPoints() {
+                stopScreenPoints = stops.map { stop ->
+                    val screen = readyMap.projection.toScreenLocation(LatLng(stop.coordinates.latitude, stop.coordinates.longitude))
+                    Offset(screen.x.toFloat(), screen.y.toFloat())
+                }
+            }
+            val moveListener = MapLibreMap.OnCameraMoveListener { updateStopScreenPoints() }
+            val idleListener = MapLibreMap.OnCameraIdleListener { updateStopScreenPoints() }
+            updateStopScreenPoints()
+            readyMap.addOnCameraMoveListener(moveListener)
+            readyMap.addOnCameraIdleListener(idleListener)
+            onDispose {
+                readyMap.removeOnCameraMoveListener(moveListener)
+                readyMap.removeOnCameraIdleListener(idleListener)
+            }
+        }
+    }
+}
+
+private fun pointFeature(location: Coordinates): String =
+    "{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"type\":\"Point\",\"coordinates\":[${location.longitude},${location.latitude}]}}"
+
+private fun geofenceFeature(center: Coordinates, radiusMeters: Int): String {
+    val coordinates = geofencePolygon(center, radiusMeters).joinToString(",") {
+        "[${it.longitude},${it.latitude}]"
+    }
+    return "{\"type\":\"Feature\",\"properties\":{},\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[$coordinates]]}}"
 }
 
 @Composable

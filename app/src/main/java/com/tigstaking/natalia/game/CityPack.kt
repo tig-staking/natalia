@@ -38,7 +38,11 @@ data class CityPack(
                         geofenceRadiusMeters = place.getInt("geofenceRadiusMeters"),
                         intro = place.getString("intro"),
                         fact = place.getString("fact"),
-                        spanishWord = SpanishWord(word.getString("word"), word.getString("meaning")),
+                        spanishWord = SpanishWord(
+                            word.getString("word"),
+                            word.getString("meaning"),
+                            word.optString("pronunciation").takeIf(String::isNotBlank),
+                        ),
                         quest = Quest(
                             quest.getString("id"),
                             QuestType.valueOf(quest.getString("type")),
@@ -125,7 +129,7 @@ data class Place(
     }
 }
 
-data class SpanishWord(val word: String, val meaning: String)
+data class SpanishWord(val word: String, val meaning: String, val pronunciation: String? = null)
 enum class QuestType { OBSERVATION, SAY_PHRASE, MULTIPLE_CHOICE, PARENT_CHECK }
 data class Quest(
     val id: String,

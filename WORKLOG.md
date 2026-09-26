@@ -2,6 +2,15 @@
 
 Updated: 2026-09-26
 
+## UI feedback follow-up — route map and learning content
+
+- Responding to the user's review: place facts now have a clear `CIEKAWOSTKA` heading; the Spanish stage explicitly presents pronunciation, a phonetic hint for `torre`, and a prominent listen-and-repeat action.
+- Improved the map's online street style to OpenFreeMap Liberty and added numbered coral map pins for real City Pack stops, plus an itinerary card and concise legend. After GeoJSON circles and MapLibre annotations proved invisible in emulator screenshots, pins were moved into a Compose overlay positioned through MapLibre's coordinate projection. A manual pan check confirms the marker follows its real location. GPS stays blue and is hidden when it overlaps the destination marker. A leftover “map position updated” toast was removed.
+- Fixed completed-progress navigation: `Misje` used to point to the passport after the final stage, making the tab duplicate the passport. It now opens a Missions overview with direct links and visible summaries for the place fact, quest, Spanish word/pronunciation, and quiz. Individual learning screens remain reachable after completion.
+- The Barcelona pack currently contains only Sagrada Família. The map intentionally does not invent other itinerary stops; the next content expansion should add real, reviewed City Pack entries with coordinates and learning material.
+- Added City Pack validation coverage for the pronunciation hint. Final `testDebugUnitTest assembleDebug` passed after the Missions overview was added. On the API 35 emulator at 1080×1920, visually confirmed the numbered map marker, horizontal pan tracking, distinct Missions/Passport destinations, the fact and quest summaries, the Spanish word/pronunciation hint, and the dedicated listen-and-repeat screen. Emulator checks do not confirm TTS audio quality on a physical phone.
+- Local visual-QA screenshots are temporary and must not be committed. Personal photos in `foty/` remain Git-ignored and are not included.
+
 This file is the cross-computer handoff note. GitHub `main` is the source of truth. Read this file, [the code map](docs/CODE_MAP.md), and `PROJECT_SPEC.md` before continuing on another computer.
 
 ## Visual direction milestone
@@ -43,7 +52,7 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 - Check-in errors for missing permission, disabled location services, and unavailable fresh location are shown as actionable Polish messages.
 - The Spanish word stage can speak its word with the platform `es-ES` voice. The UI handles a missing engine/voice and releases TTS when the app screen is disposed.
 - Foreground one-shot Fused Location Provider checks coarse/fine permission, enabled location providers, and a fresh location. No background location or route history.
-- The mission map now uses MapLibre Native with the OpenFreeMap Positron street style (OpenStreetMap data), POI/geofence/GPS overlays, visible attribution, and a local schematic fallback when the style cannot load. It requires internet and does not yet download offline map packs. No Google Maps key is needed. See `docs/LOCATION.md` for provider terms and offline-pack constraints.
+- The mission map now uses MapLibre Native with the OpenFreeMap Liberty street style (OpenStreetMap data), numbered route stops, POI/geofence/GPS overlays, visible attribution, and a local schematic fallback when the style cannot load. It requires internet and does not yet download offline map packs. No Google Maps key is needed. See `docs/LOCATION.md` for provider terms and offline-pack constraints.
 - A Compose instrumentation smoke test launches the app and opens the Sagrada Família check-in screen.
 - GitHub Actions runs unit tests, compiles instrumentation test sources, builds a debug APK, and uploads that APK. Successful APK artifacts are retained for 14 days.
 - [`docs/CODE_MAP.md`](docs/CODE_MAP.md) describes file ownership and where to look for common problems.

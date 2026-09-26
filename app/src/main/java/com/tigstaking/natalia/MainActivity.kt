@@ -105,7 +105,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private enum class GameScreen { ONBOARDING, HOME, MAP, PLACE, QUEST, WORD, QUIZ, PASSPORT, REWARDS }
+private enum class GameScreen { ONBOARDING, HOME, MAP, MISSIONS, PLACE, QUEST, WORD, QUIZ, PASSPORT, REWARDS }
 
 @Composable
 private fun NataliaNaTropieApp() {
@@ -113,7 +113,8 @@ private fun NataliaNaTropieApp() {
     val progressRepository = remember(context) { GameProgressRepository(context) }
     val parentPinStore = remember(context) { ParentPinStore(context) }
     val engine = remember(progressRepository) { GameEngine(progressRepository) }
-    val basePlace = remember(context) { CityPackRepository(context).loadBarcelona().places.first() }
+    val cityPack = remember(context) { CityPackRepository(context).loadBarcelona() }
+    val basePlace = cityPack.places.first()
     val savedTestPoi by progressRepository.debugTestPoi.collectAsState(initial = null)
     val place = remember(basePlace, savedTestPoi) {
         savedTestPoi?.let { testPoi ->
@@ -341,7 +342,7 @@ private fun NataliaNaTropieApp() {
             val fix = locationProvider.currentLocation()
             mapCoordinates = fix.coordinates
             mapAccuracy = fix.accuracyMeters.toDouble()
-            message = "Pozycja mapy zaktualizowana."
+            message = ""
         } catch (error: LocationPermissionRequiredException) {
             message = "Brak zgody na lokalizację."
         } catch (error: LocationServicesDisabledException) {
@@ -493,7 +494,59 @@ private fun NataliaNaTropieApp() {
                         Card(Modifier.fillMaxWidth()) {
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text("${place.name} · $mapStatus", style = MaterialTheme.typography.titleMedium)
-                                StreetMap(place.coordinates, mapCoordinates, place.geofenceRadiusMeters)
+                                val routePlaces = if (savedTestPoi != null) listOf(place) else cityPack.places
+                                val routeStops = routePlaces.mapIndexed { index, routePlace ->
+                                    val stopCompleted = routePlace.quiz.id in progress.completedQuizIds
+                                    val stopDiscovered = routePlace.id in progress.discoveredPlaceIds
+                                    val stopState = when {
+                                        stopCompleted -> "UKOŃCZONE"
+                                        stopDiscovered -> "ODKRYTE · W TOKU"
+                                        else -> "DO ODKRYCIA"
+                                    }
+                                    val markerColor = when {
+                                        stopCompleted -> android.graphics.Color.rgb(46, 157, 113)
+                                        stopDiscovered -> android.graphics.Color.rgb(255, 120, 107)
+                                        else -> android.graphics.Color.rgb(56, 137, 148)
+                                    }
+                                    JourneyMapStop(index + 1, routePlace.name, routePlace.coordinates, stopState, markerColor)
+                                }
+                                StreetMap(place.coordinates, mapCoordinates, place.geofenceRadiusMeters, routeStops)
+                                val showSeparateGpsDot = mapCoordinates?.let {
+                                    com.tigstaking.natalia.game.Proximity.distanceMeters(it, place.coordinates) > 25.0
+                                } == true
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Surface(color = Color(0xFFFF786B), shape = RoundedCornerShape(50), modifier = Modifier.width(14.dp).height(14.dp)) {}
+                                        Text("Przystanek", style = MaterialTheme.typography.labelMedium)
+                                    }
+                                    if (showSeparateGpsDot) {
+                                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                            Surface(color = Color(0xFF2A82E0), shape = RoundedCornerShape(50), modifier = Modifier.width(14.dp).height(14.dp)) {}
+                                            Text("Twoja pozycja", style = MaterialTheme.typography.labelMedium)
+                                        }
+                                    }
+                                }
+                                if (mapCoordinates != null && !showSeparateGpsDot) {
+                                    Text("Jesteś przy przystanku — punkty GPS i celu nakładają się.", style = MaterialTheme.typography.labelMedium, color = NataliaPalette.Muted)
+                                }
+                                Text("TRASA · ${routeStops.size} ${if (routeStops.size == 1) "PRZYSTANEK" else "PRZYSTANKI"}", style = MaterialTheme.typography.labelLarge, color = NataliaPalette.Muted)
+                                routeStops.forEach { stop ->
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.surfaceVariant,
+                                        shape = RoundedCornerShape(16.dp),
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) {
+                                        Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                            Surface(color = Color(stop.color), shape = RoundedCornerShape(14.dp)) {
+                                                Text("${stop.number.toString().padStart(2, '0')}", Modifier.padding(horizontal = 12.dp, vertical = 8.dp), color = Color.White, style = MaterialTheme.typography.titleMedium)
+                                            }
+                                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                                Text(stop.name, style = MaterialTheme.typography.titleMedium)
+                                                Text(stop.state, style = MaterialTheme.typography.labelMedium, color = NataliaPalette.Muted)
+                                            }
+                                        }
+                                    }
+                                }
                                 Text("Mapa online · dane OpenStreetMap", style = MaterialTheme.typography.bodyMedium, color = NataliaPalette.Muted)
                                 val userPoint = mapCoordinates
                                 if (userPoint != null) {
@@ -520,6 +573,46 @@ private fun NataliaNaTropieApp() {
                         Button(onClick = { screen = GameScreen.PLACE }, modifier = Modifier.fillMaxWidth()) {
                             Text("OTWÓRZ MIEJSCE")
                         }
+                    }
+                    GameScreen.MISSIONS -> {
+                        Text("MISJE I CIEKAWOSTKI", style = MaterialTheme.typography.titleLarge)
+                        Text(place.name, style = MaterialTheme.typography.headlineSmall)
+                        MissionOverviewCard(
+                            eyebrow = "PRZYSTANEK 01 · CIEKAWOSTKA",
+                            title = place.name,
+                            description = place.fact,
+                            status = if (place.id in progress.discoveredPlaceIds) "ODKRYTE" else "DO ODKRYCIA",
+                            action = "OTWÓRZ MIEJSCE",
+                            onClick = { screen = GameScreen.PLACE },
+                        )
+                        MissionOverviewCard(
+                            eyebrow = "ETAP 1 Z 3 · MISJA",
+                            title = "Małe zadanie w Barcelonie",
+                            description = place.quest.prompt,
+                            status = if (place.quest.id in progress.completedQuestIds) "UKOŃCZONE" else "DO WYKONANIA",
+                            action = "OTWÓRZ MISJĘ",
+                            enabled = place.id in progress.discoveredPlaceIds,
+                            onClick = { screen = GameScreen.QUEST },
+                        )
+                        MissionOverviewCard(
+                            eyebrow = "ETAP 2 Z 3 · HISZPAŃSKI",
+                            title = "${place.spanishWord.word} = ${place.spanishWord.meaning}",
+                            description = place.spanishWord.pronunciation?.let { "Wskazówka wymowy: $it" }
+                                ?: "Posłuchaj słowa i powtórz je na głos.",
+                            status = if (place.id in progress.completedWordIds) "POZNANE" else "DO POZNANIA",
+                            action = if (place.quest.id in progress.completedQuestIds) "OTWÓRZ SŁÓWKO I WYMOWĘ" else "NAJPIERW UKOŃCZ MISJĘ",
+                            enabled = place.quest.id in progress.completedQuestIds,
+                            onClick = { screen = GameScreen.WORD },
+                        )
+                        MissionOverviewCard(
+                            eyebrow = "ETAP 3 Z 3 · QUIZ",
+                            title = "Sprawdź, co zapamiętałaś",
+                            description = place.quiz.question,
+                            status = if (place.quiz.id in progress.completedQuizIds) "UKOŃCZONE" else "DO ROZWIĄZANIA",
+                            action = if (place.id in progress.completedWordIds) "OTWÓRZ QUIZ" else "NAJPIERW POZNAJ SŁÓWKO",
+                            enabled = place.id in progress.completedWordIds,
+                            onClick = { screen = GameScreen.QUIZ },
+                        )
                     }
                     GameScreen.HOME -> {
                         Card(modifier = Modifier.fillMaxWidth()) {
@@ -549,7 +642,7 @@ private fun NataliaNaTropieApp() {
                                 }
                             }
                         }
-                        OutlinedButton(onClick = { screen = nextScreen }, modifier = Modifier.fillMaxWidth()) { Text("MISJE") }
+                        OutlinedButton(onClick = { screen = GameScreen.MISSIONS }, modifier = Modifier.fillMaxWidth()) { Text("MISJE") }
                         OutlinedButton(onClick = { screen = GameScreen.PASSPORT }, modifier = Modifier.fillMaxWidth()) { Text("PASZPORT") }
                         val reservedStars = progress.pendingRewardRequests.values.sumOf { it.cost }
                         Button(
@@ -596,7 +689,10 @@ private fun NataliaNaTropieApp() {
                             Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                                 Text(place.intro, style = MaterialTheme.typography.bodyLarge)
                                 Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(16.dp)) {
-                                    Text(place.fact, Modifier.padding(14.dp), style = MaterialTheme.typography.bodyMedium)
+                                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Text("CIEKAWOSTKA", style = MaterialTheme.typography.labelLarge, color = NataliaPalette.Muted)
+                                        Text(place.fact, style = MaterialTheme.typography.bodyLarge)
+                                    }
                                 }
                             }
                         }
@@ -642,13 +738,19 @@ private fun NataliaNaTropieApp() {
                         }
                     }
                     GameScreen.WORD -> {
+                        Text("SŁÓWKO I WYMOWA", style = MaterialTheme.typography.titleLarge)
                         Text("ETAP 2 Z 3 · HISZPAŃSKI", style = MaterialTheme.typography.labelLarge, color = NataliaPalette.Muted)
                         Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                            Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text(place.spanishWord.word, style = MaterialTheme.typography.headlineMedium)
-                                Text(place.spanishWord.meaning, style = MaterialTheme.typography.bodyLarge)
+                            Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Text("DZIŚ POZNAJESZ", style = MaterialTheme.typography.labelLarge, color = NataliaPalette.Muted)
+                                Text(place.spanishWord.word, style = MaterialTheme.typography.headlineLarge)
+                                Text("= ${place.spanishWord.meaning}", style = MaterialTheme.typography.titleLarge)
+                                place.spanishWord.pronunciation?.let {
+                                    Text("Wskazówka wymowy: $it", style = MaterialTheme.typography.bodyLarge)
+                                }
                             }
                         }
+                        Text("Posłuchaj hiszpańskiego głosu, a potem powtórz słowo na głos.", style = MaterialTheme.typography.bodyLarge)
                         when (val status = speechStatus) {
                             SpanishSpeechStatus.Loading -> Text("Przygotowuję wymowę…")
                             SpanishSpeechStatus.Ready -> OutlinedButton(
@@ -658,7 +760,7 @@ private fun NataliaNaTropieApp() {
                                     }
                                 },
                                 modifier = Modifier.fillMaxWidth(),
-                            ) { Text("ODSŁUCHAJ WYMOWĘ (ES-ES)") }
+                            ) { Text("▶  ODSŁUCHAJ WYMOWĘ") }
                             is SpanishSpeechStatus.Unavailable -> Text(status.reason)
                         }
                         Button(
@@ -950,17 +1052,17 @@ private fun NataliaNaTropieApp() {
                 }
               }
               if (screen != GameScreen.ONBOARDING) {
-                  val missionDestination = if (nextScreen == GameScreen.PASSPORT) GameScreen.PASSPORT else nextScreen
                   NavigationBar(containerColor = Color.White) {
                       val items = listOf(
                           Triple("Odkrywaj", "⌖", GameScreen.HOME),
-                          Triple("Misje", "⚑", missionDestination),
+                          Triple("Misje", "⚑", GameScreen.MISSIONS),
                           Triple("Paszport", "▤", GameScreen.PASSPORT),
                           Triple("Nagrody", "☆", GameScreen.REWARDS),
                       )
                       items.forEach { (label, glyph, destination) ->
                           val selected = when (destination) {
                               GameScreen.HOME -> screen == GameScreen.HOME || screen == GameScreen.MAP
+                              GameScreen.MISSIONS -> screen in setOf(GameScreen.MISSIONS, GameScreen.PLACE, GameScreen.QUEST, GameScreen.WORD, GameScreen.QUIZ)
                               GameScreen.PASSPORT -> screen == GameScreen.PASSPORT
                               GameScreen.REWARDS -> screen == GameScreen.REWARDS
                               else -> screen in setOf(GameScreen.PLACE, GameScreen.QUEST, GameScreen.WORD, GameScreen.QUIZ)
@@ -975,6 +1077,32 @@ private fun NataliaNaTropieApp() {
                   }
               }
             }
+        }
+    }
+}
+
+@Composable
+private fun MissionOverviewCard(
+    eyebrow: String,
+    title: String,
+    description: String,
+    status: String,
+    action: String,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(eyebrow, style = MaterialTheme.typography.labelLarge, color = NataliaPalette.Muted)
+                Text(status, style = MaterialTheme.typography.labelLarge, color = NataliaPalette.Coral)
+            }
+            Text(title, style = MaterialTheme.typography.titleLarge)
+            Text(description, style = MaterialTheme.typography.bodyLarge)
+            OutlinedButton(enabled = enabled, onClick = onClick, modifier = Modifier.fillMaxWidth()) { Text(action) }
         }
     }
 }

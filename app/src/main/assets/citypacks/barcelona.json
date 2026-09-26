@@ -14,7 +14,11 @@
       "geofenceRadiusMeters": 120,
       "intro": "Natalia, trafiłaś do jednego z najbardziej niezwykłych miejsc Barcelony!",
       "fact": "Antoni Gaudí poświęcił projektowi bazyliki ponad 40 lat swojego życia.",
-      "spanishWord": { "word": "torre", "meaning": "wieża" },
+      "spanishWord": {
+        "word": "torre",
+        "meaning": "wieża",
+        "pronunciation": "TO-rre · mocne, wibrujące „rr”"
+      },
       "quest": {
         "id": "sagrada-observation",
         "type": "OBSERVATION",

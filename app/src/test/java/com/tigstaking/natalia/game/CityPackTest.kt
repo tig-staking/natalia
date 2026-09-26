@@ -14,6 +14,7 @@ class CityPackTest {
         assertEquals("test-place", pack.places.single().id)
         assertEquals(50, pack.places.single().rewards.totalXp)
         assertEquals(50, pack.places.single().rewards.totalStars)
+        assertEquals("TO-rre · mocne, wibrujące „rr”", pack.places.single().spanishWord.pronunciation)
     }
 
     @Test
@@ -66,7 +67,7 @@ class CityPackTest {
                   "geofenceRadiusMeters": 100,
                   "intro": "Welcome",
                   "fact": "A fact",
-                  "spanishWord": { "word": "torre", "meaning": "wieża" },
+                  "spanishWord": { "word": "torre", "meaning": "wieża", "pronunciation": "TO-rre · mocne, wibrujące „rr”" },
                   "quest": { "id": "test-quest", "type": "OBSERVATION", "prompt": "Look around" },
                   "quiz": {
                     "id": "test-quiz",
