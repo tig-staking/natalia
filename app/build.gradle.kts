@@ -6,6 +6,15 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val releaseSigningVariables = listOf(
+    "NATALIA_RELEASE_STORE_FILE",
+    "NATALIA_RELEASE_STORE_PASSWORD",
+    "NATALIA_RELEASE_KEY_ALIAS",
+    "NATALIA_RELEASE_KEY_PASSWORD",
+)
+val releaseSigningValues = releaseSigningVariables.associateWith { System.getenv(it)?.takeIf(String::isNotBlank) }
+val hasReleaseSigning = releaseSigningValues.values.all { it != null }
+
 android {
     namespace = "com.tigstaking.natalia"
     compileSdk = 35
@@ -24,6 +33,23 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    if (hasReleaseSigning) {
+        signingConfigs {
+            create("release") {
+                storeFile = rootProject.file(releaseSigningValues.getValue("NATALIA_RELEASE_STORE_FILE")!!)
+                storePassword = releaseSigningValues.getValue("NATALIA_RELEASE_STORE_PASSWORD")
+                keyAlias = releaseSigningValues.getValue("NATALIA_RELEASE_KEY_ALIAS")
+                keyPassword = releaseSigningValues.getValue("NATALIA_RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        getByName("release") {
+            if (hasReleaseSigning) signingConfig = signingConfigs.getByName("release")
+        }
+    }
+
     buildFeatures {
         compose = true
         buildConfig = true
@@ -40,6 +66,23 @@ android {
             }
         }
     }
+}
+
+val verifyReleaseSigning by tasks.registering {
+    doLast {
+        val missing = releaseSigningVariables.filter { releaseSigningValues[it] == null }
+        check(missing.isEmpty()) {
+            "Release APK signing is not configured. Set the required NATALIA_RELEASE_* environment variables; see docs/LOCAL_DEVELOPMENT.md."
+        }
+        val storePath = releaseSigningValues.getValue("NATALIA_RELEASE_STORE_FILE")!!
+        check(rootProject.file(storePath).isFile) {
+            "Release keystore file does not exist at the configured NATALIA_RELEASE_STORE_FILE path."
+        }
+    }
+}
+
+tasks.configureEach {
+    if (name == "packageRelease" || name == "bundleRelease") dependsOn(verifyReleaseSigning)
 }
 
 kotlin {
