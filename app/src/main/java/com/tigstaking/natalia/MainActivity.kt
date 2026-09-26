@@ -65,6 +65,8 @@ import com.tigstaking.natalia.game.Coordinates
 import com.tigstaking.natalia.game.Place
 import com.tigstaking.natalia.game.PlaceCheckInResult
 import com.tigstaking.natalia.game.PlayerLevel
+import com.tigstaking.natalia.game.Proximity
+import com.tigstaking.natalia.game.ProximityResult
 import com.tigstaking.natalia.game.QuizAnswerResult
 import com.tigstaking.natalia.game.location.FusedLocationProvider
 import com.tigstaking.natalia.game.speech.SpanishSpeechController
@@ -246,7 +248,17 @@ private fun NataliaNaTropieApp() {
         try {
             val fix = locationProvider.currentLocation()
             val ageSeconds = ((System.currentTimeMillis() - fix.capturedAtMillis).coerceAtLeast(0L) / 1_000L)
-            gpsDiagnostic += "\nOstatni odczyt: dokładność ±${fix.accuracyMeters.toInt()} m, wiek ${ageSeconds} s."
+            val distance = Proximity.distanceMeters(fix.coordinates, place.coordinates)
+            val zone = when (Proximity.classify(
+                fix.coordinates, place.coordinates, place.geofenceRadiusMeters, fix.accuracyMeters.toDouble(),
+            )) {
+                is ProximityResult.Inside -> "w strefie"
+                is ProximityResult.Outside -> "poza strefą"
+                is ProximityResult.Uncertain -> "niepewna — popraw dokładność GPS"
+            }
+            gpsDiagnostic += "\nOstatni odczyt: ${"%.5f".format(fix.coordinates.latitude)}, " +
+                "${"%.5f".format(fix.coordinates.longitude)}, dokładność ±${fix.accuracyMeters.toInt()} m, wiek $ageSeconds s."
+            gpsDiagnostic += "\nOdległość do ${place.name}: ${distance.toInt()} m. Strefa: $zone."
         } catch (error: LocationPermissionRequiredException) {
             gpsDiagnostic += "\nSystem nie przyznał aplikacji uprawnienia do odczytu lokalizacji."
         } catch (error: LocationServicesDisabledException) {
@@ -409,6 +421,9 @@ private fun NataliaNaTropieApp() {
                             Text(if (place.id in progress.discoveredPlaceIds) "KONTYNUUJ PRZYGODĘ" else "POKAŻ MIEJSCE")
                         }
                         OutlinedButton(onClick = { screen = GameScreen.MAP; requestMapLocation() }, modifier = Modifier.fillMaxWidth()) { Text("MAPA PRZYGODY") }
+                        OutlinedButton(onClick = { screen = nextScreen }, modifier = Modifier.fillMaxWidth()) { Text("MISJE") }
+                        OutlinedButton(onClick = { screen = GameScreen.PASSPORT }, modifier = Modifier.fillMaxWidth()) { Text("PASZPORT") }
+                        Text("NAGRODY", style = MaterialTheme.typography.titleMedium)
                         val reservedStars = progress.pendingRewardRequests.values.sumOf { it.cost }
                         Button(
                             enabled = progress.stars - reservedStars >= 100,
@@ -536,8 +551,12 @@ private fun NataliaNaTropieApp() {
                     }
                     GameScreen.PASSPORT -> {
                         Text("PASZPORT BARCELONY", style = MaterialTheme.typography.titleLarge)
-                        Text("✓ ${place.name}")
-                        Text("ODZNAKA: ${place.badge}")
+                        if (place.id in progress.discoveredPlaceIds) {
+                            Text("Odkryte: ${place.name}")
+                        } else Text("${place.name} czeka na odkrycie.")
+                        if ("badge:${place.id}" in progress.earnedBadgeIds) {
+                            Text("✓ UKOŃCZONE · ODZNAKA: ${place.badge}")
+                        } else Text("Odznaka czeka na ukończenie misji i quizu.")
                         Button(onClick = { screen = GameScreen.HOME }, modifier = Modifier.fillMaxWidth()) {
                             Text("WRÓĆ DO DOMU")
                         }
