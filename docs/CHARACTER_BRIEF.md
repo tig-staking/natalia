@@ -4,7 +4,7 @@
 
 Natalka is the recurring protagonist and travel companion of NataliaQuest.
 
-The illustrated character should be based on a real reference photograph supplied by the user. The goal is not to create a generic anime girl. The goal is to create a consistent manga/anime interpretation of the real person while preserving recognizable features.
+The illustrated character should be based on a real reference photograph supplied by the user. The goal is not to create a generic animated girl. The goal is to create a consistent stylized animated interpretation of the real person while preserving recognizable features.
 
 ## 2. Reference source
 
@@ -20,13 +20,13 @@ When a suitable reference photograph is provided, use it as the primary source f
 
 Do not invent major physical features that contradict the reference image.
 
-The manga interpretation does not need to be photorealistic, but it should remain recognizably inspired by the photographed person.
+The illustration does not need to be photorealistic, but it should remain recognizably inspired by the photographed person.
 
 Real reference photographs are private source material. Keep them outside Git and never commit them to the repository. The local `foty/` directory is ignored for this purpose.
 
 ## 3. Target style
 
-Preferred direction: **soft contemporary manga/anime travel adventure**.
+Preferred direction: **expressive, polished 3D animated travel adventure** — warm and appealing like a high-quality family animated feature (Pixar-like as a broad shorthand), while remaining an original character design.
 
 The character should feel:
 
@@ -44,19 +44,19 @@ She should not feel:
 - chibi,
 - excessively kawaii,
 - exaggerated,
-- overly cartoonish,
+- toy-like or heavily exaggerated,
 - mature beyond her age.
 
 ## 4. Visual treatment
 
 Prefer:
 
-- clean manga line work,
-- soft cel-style shading,
-- moderate detail,
-- expressive eyes without extreme exaggeration,
-- natural facial proportions,
-- believable body proportions,
+- carefully sculpted 3D forms and a hand-drawn sensibility,
+- soft studio-quality shading and natural light,
+- moderate, mobile-readable detail,
+- expressive eyes while retaining the reference's natural eye shape,
+- recognizable face and natural facial proportions,
+- believable child body proportions and age,
 - contemporary clothing,
 - a cohesive palette.
 
@@ -70,7 +70,7 @@ All character assets should preserve:
 - the same hairstyle unless explicitly changed,
 - consistent eye color,
 - consistent proportions,
-- the same general illustration technique,
+- the same 3D animated rendering and material treatment,
 - a consistent palette,
 - a consistent age appearance.
 
@@ -119,7 +119,7 @@ Whenever possible, assets intended for UI should work on transparent backgrounds
 
 ## 9. Base outfit
 
-The character should have one recognizable default travel outfit. The final outfit may be chosen based on the reference image and UI direction.
+The character should have one recognizable default travel outfit. The selected B concept outfit is the current starting point: navy-and-white striped T-shirt with coral trim, light denim shorts, gray walking sneakers, and a teal travel backpack. Keep this outfit consistent across the new concepts unless the user later changes it.
 
 Preferred qualities:
 
@@ -165,13 +165,13 @@ Use the real photograph as the visual reference.
 
 ### Stage 2 — Character concepts
 
-Create approximately three stylistic interpretations of the same person:
+Create approximately three stylistic interpretations of the same person, all within the newly selected stylized 3D animated family-adventure direction:
 
-- **A. Clean Anime** — more restrained, modern, and UI-friendly.
-- **B. Manga Travel** — more expressive and narrative.
-- **C. Game Adventure** — slightly more dynamic and game-oriented.
+- **A. Clean 3D Animation** — restrained, modern, and UI-friendly, with natural proportions and soft materials.
+- **B. Feature Animation** — warmer facial acting and richer sculpted lighting, like a polished family adventure film; original design, not a copy of any studio character.
+- **C. 3D Game Adventure** — a more graphic silhouette and slightly more dynamic pose, still grounded, age-appropriate, and non-fantasy.
 
-All three should remain consistent with `docs/DESIGN_SYSTEM.md`.
+All three should preserve the same identity, haircut, age, and base outfit, and harmonize with `docs/DESIGN_SYSTEM.md`.
 
 ### Stage 3 — Selection
 
@@ -199,11 +199,12 @@ Do not:
 - change hairstyle between assets,
 - significantly change age appearance,
 - use chibi proportions,
-- exaggerate kawaii traits,
+- exaggerate the eyes, head, or kawaii traits,
 - sexualize the character,
 - create inconsistent eye or hair colors,
 - create unrelated outfits for every image,
-- turn the character into a generic anime archetype.
+- turn the character into a generic anime or animation archetype,
+- copy a specific existing studio character or add recognizable studio branding.
 
 ## 15. Relationship to the design system
 

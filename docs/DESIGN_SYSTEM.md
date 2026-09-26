@@ -30,15 +30,15 @@ The application must not feel:
 - like a generic educational app,
 - like a fantasy RPG.
 
-Target direction: a modern travel-adventure application with clean mobile UI, soft manga character artwork, subtle gamification, warm Mediterranean-inspired colors, and polished microinteractions.
+Target direction: a modern travel-adventure application with clean mobile UI, expressive stylized 3D character artwork, subtle gamification, warm Mediterranean-inspired colors, and polished microinteractions. Manga-inspired pacing and comic accents may remain in storytelling moments.
 
 ## 3. Core principle: UI is not manga
 
 The core application interface should remain clean, readable, and modern.
 
-Manga-inspired artwork should provide personality, emotion, and storytelling. Illustration should complement the interface rather than dominate it.
+Character illustration and restrained comic accents should provide personality, emotion, and storytelling. Artwork should complement the interface rather than dominate it.
 
-Use manga artwork primarily for:
+Use character art and comic accents primarily for:
 
 - important moments,
 - welcome states,
@@ -198,16 +198,16 @@ Avoid mixing emoji, realistic icons, 3D icons, unrelated line styles, and cartoo
 
 ## 13. Character illustration style
 
-The main character should follow a **soft contemporary manga/anime** direction.
+The main character should follow a **polished stylized 3D animated feature** direction, with the warmth and expressiveness of family adventure animation while remaining an original design.
 
 Characteristics:
 
-- clean line work,
-- soft shading,
+- sculpted, readable forms,
+- soft, natural shading and light,
 - moderate detail,
 - expressive but natural face,
 - contemporary clothing,
-- believable proportions,
+- believable child proportions,
 - warm and cohesive color treatment.
 
 Avoid:
@@ -339,7 +339,7 @@ Avoid hardcoding these values repeatedly across screens.
 - Use one primary typography system.
 - Use centralized design tokens.
 - Use one coherent icon family.
-- Use one consistent manga illustration style.
+- Use one consistent stylized 3D character rendering style.
 - Keep UI cleaner than illustrations.
 - Reuse existing components before creating new ones.
 - Do not create screen-specific visual systems.

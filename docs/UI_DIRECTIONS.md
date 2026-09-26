@@ -2,7 +2,9 @@
 
 ## Purpose and scope
 
-This document compares three visual interpretations of the same product and the same design system. It does not select a final direction and does not authorize a production UI rewrite.
+This document compares three visual interpretations of the same product and the same design system. The user has selected **Direction B — Manga Travel** as the UI base, combined with selected progression cues from **Direction C — Game Adventure**. This records the visual direction; it does not authorize replacing the production screens before a concrete implementation step is planned.
+
+The Passport / Reward screen should follow Direction B: one clear Barcelona passport stamp, a distinct earned badge, and a concise character celebration. Borrow only compact progress and reward availability from C. Do not use C's dense multi-city locked collection or stacked statistics.
 
 The comparison is grounded in the current application flow and uses the same four product moments in every direction:
 
@@ -277,6 +279,6 @@ Medium to high. The direction needs more reusable components, progress states, g
 
 ## Decision boundary
 
-No direction is selected in this document. The next production step should begin only after the user chooses a base direction and identifies any elements to borrow from the other two.
+The selected UI blend is B as the narrative and layout base, with C's compact progression cues. The current UI mockup board remains a visual reference; production UI work should reuse its simple Barcelona passport and avoid C's crowded collection screen.
 
-The three character concepts are also exploratory. Do not generate the full pose set until one base character is approved as the master reference.
+The character rendering direction has since changed to stylized 3D family-feature animation. The new character concepts are exploratory; do not generate the full pose set until one base character is approved as the master reference.

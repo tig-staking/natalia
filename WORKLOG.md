@@ -8,8 +8,9 @@ This file is the cross-computer handoff note. GitHub `main` is the source of tru
 
 - Added `docs/DESIGN_SYSTEM.md` as the visual source of truth and `docs/CHARACTER_BRIEF.md` as the source of truth for Natalia's illustrated character. `AGENTS.md` now requires both documents before relevant UI/character work and explicitly keeps real reference photos out of Git.
 - Audited the current UI: screens and flows are functional but live mostly in one `MainActivity.kt`, use default Material 3 styling, direct screen state, a single scrolling column, emoji character placeholders, and several hardcoded map/celebration colors. No production theme/token/component layer exists yet.
-- Prepared three character concept previews from the private local references (Clean Anime, Manga Travel, Game Adventure) and three matching UI comparison boards covering Home, Map/Place, Quest/Quiz, and Passport/Reward. Generated previews remain outside Git pending selection.
-- Added `docs/UI_DIRECTIONS.md` with layouts, hierarchy, color/character/photo use, components, navigation, motion, strengths, limitations, age risk, Compose difficulty, mixable elements, and conflicts. No direction has been selected and no production UI has been replaced.
+- Prepared three character concept previews from private local references and three matching UI comparison boards covering Home, Map/Place, Quest/Quiz, and Passport/Reward. The user selected UI B with restrained progression cues from C, specifically preferring B's simpler Barcelona passport and badge. Generated previews remain outside Git.
+- Added `docs/UI_DIRECTIONS.md` with layouts, hierarchy, color/character/photo use, components, navigation, motion, strengths, limitations, age risk, Compose difficulty, mixable elements, and conflicts. The selected UI direction is documented; no production UI has been replaced.
+- Following the user's later direction, replaced the anime character brief with polished stylized 3D family-feature animation, produced a new A/B/C character concept set from the private references, and kept the selected B+C UI direction unchanged. The revised character base still awaits approval; no full pose set or production UI changes have been made.
 
 ## Goal and working constraints
 
