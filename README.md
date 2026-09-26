@@ -168,7 +168,7 @@ Instrukcje klonowania, konfiguracji Android Studio, budowania APK i pracy na kil
 3. Dodaj testowe gwiazdki w Developer Mode, poproś o lody i otwórz Tryb rodzica. Ustaw czterocyfrowy PIN, zatwierdź prośbę i sprawdź saldo oraz historię. Zamknij i uruchom aplikację ponownie, aby zobaczyć zapisany postęp.
 4. Do testu prawdziwego GPS na telefonie wybierz w Developer Mode `UTWÓRZ TESTOWE MIEJSCE TUTAJ`, a następnie użyj `JESTEM NA MIEJSCU — SPRAWDŹ GPS`. Testowy punkt jest zapisany tylko na tym urządzeniu.
 
-Obecna mapa pokazuje współrzędne, punkt i pozycję GPS bez ulic. Geograficzna mapa Barcelony z pobieraniem offline i odczytem online jest kolejnym etapem; limit pobranych danych wynosi 200 MB. Szczegóły są w [docs/LOCATION.md](docs/LOCATION.md).
+Mapa przygody wyświetla online ulice OpenStreetMap przez MapLibre i OpenFreeMap, wraz z punktem misji, obszarem geofence i ostatnią pozycją GPS. Nie wymaga klucza Google Maps. Do działania mapy potrzebny jest internet; obecnie aplikacja nie pobiera jeszcze map offline. Opcjonalny pakiet offline pozostaje kolejnym etapem, z docelowym limitem 200 MB i zależnością od licencji dostawcy danych. Szczegóły są w [docs/LOCATION.md](docs/LOCATION.md).
 
 Opis ról poszczególnych plików źródłowych i wskazówki, gdzie szukać typowych błędów, znajdują się w [docs/CODE_MAP.md](docs/CODE_MAP.md). Bieżący stan prac i następne kroki zapisujemy w [WORKLOG.md](WORKLOG.md).
 

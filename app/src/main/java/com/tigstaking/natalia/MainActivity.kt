@@ -396,7 +396,8 @@ private fun NataliaNaTropieApp() {
                         Card(Modifier.fillMaxWidth()) {
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text("${place.name} · $mapStatus", style = MaterialTheme.typography.titleMedium)
-                                LocalMap(place.coordinates, mapCoordinates, place.geofenceRadiusMeters)
+                                StreetMap(place.coordinates, mapCoordinates, place.geofenceRadiusMeters)
+                                Text("Mapa online: OpenFreeMap · dane OpenStreetMap")
                                 Text(place.name)
                                 Text("Punkt: ${"%.5f".format(place.coordinates.latitude)}, ${"%.5f".format(place.coordinates.longitude)}")
                                 val userPoint = mapCoordinates
@@ -745,37 +746,6 @@ private fun MangaBurst() {
             drawLine(Color(0xFFFFB703), Offset(center.x + dx * inner, center.y + dy * inner), Offset(center.x + dx * outer, center.y + dy * outer), 3f)
         }
         drawCircle(Color(0xFFFFD166), size.minDimension * .18f, center)
-    }
-}
-
-@Composable
-private fun LocalMap(place: Coordinates, user: Coordinates?, radiusMeters: Int) {
-    Canvas(Modifier.fillMaxWidth().height(190.dp)) {
-        drawRect(Color(0xFFE7F1E3))
-        val roadColor = Color(0xFFFCFCF7)
-        for (index in 1..4) {
-            val x = size.width * index / 5f
-            val y = size.height * index / 5f
-            drawLine(roadColor, Offset(x, 0f), Offset(x, size.height), 13f)
-            drawLine(roadColor, Offset(0f, y), Offset(size.width, y), 12f)
-        }
-        val target = Offset(size.width / 2f, size.height / 2f)
-        val metersPerPixel = 2.5
-        drawCircle(Color(0x55607D8B), radiusMeters / metersPerPixel.toFloat(), target)
-        drawCircle(Color(0xFF294C60), 11f, target)
-        drawCircle(Color.White, 4f, target)
-        if (user != null) {
-            val latitudeMeters = (user.latitude - place.latitude) * 111_320.0
-            val longitudeMeters = (user.longitude - place.longitude) * 111_320.0 * kotlin.math.cos(Math.toRadians(place.latitude))
-            val point = Offset(
-                target.x + (longitudeMeters / metersPerPixel).toFloat(),
-                target.y - (latitudeMeters / metersPerPixel).toFloat(),
-            )
-            if (point.x in 0f..size.width && point.y in 0f..size.height) {
-                drawCircle(Color.White, 12f, point)
-                drawCircle(Color(0xFF3186D5), 8f, point)
-            }
-        }
     }
 }
 
