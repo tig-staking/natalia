@@ -242,7 +242,8 @@ private fun NataliaNaTropieApp() {
                 is PlaceCheckInResult.TooFar ->
                     message = "Jesteś około ${result.distanceMeters.toInt()} m od celu. Podejdź bliżej."
                 is PlaceCheckInResult.NeedBetterAccuracy ->
-                    message = "GPS jest zbyt niedokładny (±${result.accuracyMeters.toInt()} m). Spróbuj ponownie."
+                    message = "GPS jest zbyt niedokładny (±${result.accuracyMeters.toInt()} m). " +
+                        "Spróbuj na zewnątrz; jeśli masz dostęp przybliżony, ustaw dokładną lokalizację w uprawnieniach aplikacji."
             }
         } catch (error: LocationPermissionRequiredException) {
             message = "Brak zgody na lokalizację. Zezwól aplikacji na dostęp podczas używania."

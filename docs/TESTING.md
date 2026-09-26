@@ -19,4 +19,6 @@ The full-stage Compose test goes from onboarding through debug discovery, quest,
 
 `ProgressBackupTest` covers backup round-trip, ledger validation, and exclusion of PIN/location fields. Repository import/export should also be checked on a phone before switching the user's debug-signed installation: export from authenticated Parent Mode, verify JSON can be saved/shared, import it on a fresh installation after PIN setup, and confirm XP, stars, completions, pending requests, and redeemed rewards. Import replaces all game progress and onboarding state and asks for the local parent PIN again. The backup excludes PIN and device-local test POI coordinates.
 
+`LocationFixPolicyTest` covers valid fresh readings and rejects stale, future-dated, out-of-range, and missing-accuracy fixes. Fused GPS requests now time out after 15 seconds, request balanced power when Android grants approximate access, and reject fixes older than 30 seconds. Still verify permission denial/recovery and approximate-only behavior on a physical Android phone.
+
 For local emulator testing, install Android SDK Platform 35 and use Android Studio's bundled JDK (JDK 17 or newer). See [Local development](LOCAL_DEVELOPMENT.md).

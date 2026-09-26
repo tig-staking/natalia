@@ -75,6 +75,12 @@ Work on game behavior and reliability first. Leave visual polish and final chara
 - Authenticated Parent Mode offers export and import. Import is size-limited, previews the destructive replacement, and requires the parent PIN again. PIN and device-local test coordinates are excluded; the destination test POI is preserved.
 - Added codec round-trip, malformed-ledger, and repository import/preserve-device-POI tests. `testDebugUnitTest assembleDebug` passes. Phone transfer still needs verification before moving from debug to release signature. Do not create a keystore or switch the installed app yet.
 
+## GPS resilience update
+
+- Fused location now requests high accuracy only when precise permission is granted; approximate-only access uses balanced power and tells the player why check-in might need a better fix.
+- Requests have a 15-second timeout. A pure policy rejects invalid coordinates, missing/non-finite accuracy, readings older than 30 seconds, and timestamps implausibly in the future. Unit coverage is added; device permission and approximate-only checks still need a physical phone.
+- `testDebugUnitTest compileDebugAndroidTestSources assembleDebug` passes, and the full Pixel 2 API 35 `connectedDebugAndroidTest` suite passed 4/4 after this change.
+
 ## Known gaps to address
 
 1. The user confirmed the main phone flow: test POI check-in, quest, Spanish TTS, quiz retry, parent approval, and restart all worked. Still check approximate location, denied permission, disabled services, poor fixes, and leaving/re-entering a test POI.

@@ -15,19 +15,9 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-data class DeviceLocation(
-    val coordinates: Coordinates,
-    val accuracyMeters: Float,
-    val capturedAtMillis: Long,
-)
-
 fun interface LocationProvider {
     suspend fun currentLocation(): DeviceLocation
 }
-
-class LocationPermissionRequiredException : IllegalStateException("Allow location access while using the app")
-class LocationServicesDisabledException : IllegalStateException("Turn on location services and try again")
-class CurrentLocationUnavailableException : IllegalStateException("Current location is not available yet")
 
 class FusedLocationProvider(context: Context) : LocationProvider {
     private val appContext = context.applicationContext
@@ -47,8 +37,9 @@ class FusedLocationProvider(context: Context) : LocationProvider {
         if (!enabled) throw LocationServicesDisabledException()
 
         val request = CurrentLocationRequest.Builder()
-            .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+            .setPriority(if (fineGranted) Priority.PRIORITY_HIGH_ACCURACY else Priority.PRIORITY_BALANCED_POWER_ACCURACY)
             .setMaxUpdateAgeMillis(0)
+            .setDurationMillis(15_000)
             .build()
         val cancellation = CancellationTokenSource()
         return suspendCancellableCoroutine { continuation ->
@@ -59,13 +50,17 @@ class FusedLocationProvider(context: Context) : LocationProvider {
                     if (location == null) {
                         continuation.resumeWithException(CurrentLocationUnavailableException())
                     } else {
-                        continuation.resume(
-                            DeviceLocation(
+                        val validated = runCatching {
+                            LocationFixPolicy.validate(DeviceLocation(
                                 coordinates = Coordinates(location.latitude, location.longitude),
                                 accuracyMeters = location.accuracy,
                                 capturedAtMillis = location.time,
-                            ),
-                        )
+                            ))
+                        }.getOrElse { error ->
+                            continuation.resumeWithException(error)
+                            return@addOnSuccessListener
+                        }
+                        continuation.resume(validated)
                     }
                 }
                 .addOnFailureListener { error ->
