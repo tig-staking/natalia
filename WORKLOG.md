@@ -10,7 +10,17 @@ This file is the cross-computer handoff note. GitHub `main` is the source of tru
 - Audited the current UI: screens and flows are functional but live mostly in one `MainActivity.kt`, use default Material 3 styling, direct screen state, a single scrolling column, emoji character placeholders, and several hardcoded map/celebration colors. No production theme/token/component layer exists yet.
 - Prepared three character concept previews from private local references and three matching UI comparison boards covering Home, Map/Place, Quest/Quiz, and Passport/Reward. The user selected UI B with restrained progression cues from C, specifically preferring B's simpler Barcelona passport and badge. Generated previews remain outside Git.
 - Added `docs/UI_DIRECTIONS.md` with layouts, hierarchy, color/character/photo use, components, navigation, motion, strengths, limitations, age risk, Compose difficulty, mixable elements, and conflicts. The selected UI direction is documented; no production UI has been replaced.
-- Following the user's later direction, replaced the anime character brief with polished stylized 3D family-feature animation, produced a new A/B/C character concept set from the private references, and kept the selected B+C UI direction unchanged. The revised character base still awaits approval; no full pose set or production UI changes have been made.
+- Historical note: the user rejected the generated 3D character direction. The current approved character direction is a hand-drawn 2D illustration with fine ink contours and soft painterly/cel shading, based on the latest Barcelona character preview supplied/approved by the user. Do not use the earlier 3D concept set as the character reference.
+- Prepared a refreshed four-screen B+C UI concept board for Home, Map/Place, Quest/Quiz, and Barcelona Passport/Reward. Direction B remains the layout and storytelling base; selected C progress cues are compact; the passport stays simple with one destination stamp and one earned badge. The board is a preview only and remains outside Git. The user has not yet approved this UI board; production screens and UI assets remain unchanged.
+- Updated `docs/CHARACTER_BRIEF.md`, `docs/DESIGN_SYSTEM.md`, and `docs/UI_DIRECTIONS.md` to reflect the current 2D character style and the B+C UI concept. Private source photos remain in the Git-ignored `foty/` directory; exploratory preview boards are not committed.
+
+## Visual implementation milestone — first phone preview
+
+- The user approved the hand-drawn/painterly Natalia illustration and the refreshed B+C UI concept. The selected direction is now reflected in the production Compose UI.
+- Added `NataliaTheme.kt` with centralized palette, typography, and shape tokens; added persistent bottom navigation for Explore, Missions, Passport, and Rewards; redesigned Home with the approved Barcelona hero, a compact XP/level progress display, and an active mission card; restyled place, quest, word, quiz, passport, and reward content.
+- Added generated, transparent character reaction art for thinking, discovery, victory, and ice-cream reward. These and the approved Home hero are stored under `app/src/main/res/drawable-nodpi/`. No files from `foty/` were added.
+- Updated `docs/ANIMATIONS.md`, `docs/AVATAR_ASSETS.md`, `docs/CODE_MAP.md`, `docs/CHARACTER_BRIEF.md`, `docs/DESIGN_SYSTEM.md`, and `docs/UI_DIRECTIONS.md`.
+- `./gradlew.bat --no-daemon assembleDebug` passed after setting process-local `ANDROID_HOME`/`ANDROID_SDK_ROOT` to the SDK installed on this machine. No tests or emulator/device checks were run in this visual pass. The debug APK is at `app/build/outputs/apk/debug/app-debug.apk` for the user's phone review.
 
 ## Goal and working constraints
 

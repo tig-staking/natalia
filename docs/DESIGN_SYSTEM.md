@@ -30,7 +30,7 @@ The application must not feel:
 - like a generic educational app,
 - like a fantasy RPG.
 
-Target direction: a modern travel-adventure application with clean mobile UI, expressive stylized 3D character artwork, subtle gamification, warm Mediterranean-inspired colors, and polished microinteractions. Manga-inspired pacing and comic accents may remain in storytelling moments.
+Target direction: a modern travel-adventure application with clean mobile UI, expressive hand-drawn 2D character artwork with a soft painterly finish, subtle gamification, warm Mediterranean-inspired colors, and polished microinteractions. Character art uses fine ink outlines and gentle cel/painterly shading; it is not rendered as 3D CGI. Manga-inspired pacing and restrained comic accents may remain in storytelling moments.
 
 ## 3. Core principle: UI is not manga
 
@@ -198,12 +198,13 @@ Avoid mixing emoji, realistic icons, 3D icons, unrelated line styles, and cartoo
 
 ## 13. Character illustration style
 
-The main character should follow a **polished stylized 3D animated feature** direction, with the warmth and expressiveness of family adventure animation while remaining an original design.
+The main character follows the **approved hand-drawn 2D illustration** direction: fine dark ink contours and readable shapes, combined with soft painterly/cel-shaded faces, hair, clothing, and warm light. Keep the design original, recognizable, and consistent with the approved character reference.
 
 Characteristics:
 
-- sculpted, readable forms,
-- soft, natural shading and light,
+- clear drawn contours and readable silhouettes,
+- soft painterly/cel shading and natural light,
+- illustrated environments with restrained texture,
 - moderate detail,
 - expressive but natural face,
 - contemporary clothing,
@@ -216,7 +217,8 @@ Avoid:
 - exaggerated kawaii styling,
 - preschool cartoon styling,
 - highly sexualized styling,
-- inconsistent rendering between assets.
+- 3D/CGI rendering,
+- inconsistent linework or rendering between assets.
 
 The illustrated character should remain recognizable as the same person across all assets.
 
@@ -339,7 +341,7 @@ Avoid hardcoding these values repeatedly across screens.
 - Use one primary typography system.
 - Use centralized design tokens.
 - Use one coherent icon family.
-- Use one consistent stylized 3D character rendering style.
+- Use one consistent hand-drawn 2D character rendering style with soft painterly/cel shading.
 - Keep UI cleaner than illustrations.
 - Reuse existing components before creating new ones.
 - Do not create screen-specific visual systems.

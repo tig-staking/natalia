@@ -281,4 +281,4 @@ Medium to high. The direction needs more reusable components, progress states, g
 
 The selected UI blend is B as the narrative and layout base, with C's compact progression cues. The current UI mockup board remains a visual reference; production UI work should reuse its simple Barcelona passport and avoid C's crowded collection screen.
 
-The character rendering direction has since changed to stylized 3D family-feature animation. The new character concepts are exploratory; do not generate the full pose set until one base character is approved as the master reference.
+The character rendering direction is hand-drawn 2D illustration with soft painterly/cel shading. The user approved the latest Barcelona character image and the refreshed four-screen B+C UI concept board on 2026-09-26. Production UI work now uses B as the layout/storytelling base, compact progress cues from C, and B's simple Barcelona passport. The first cohesive assets and Compose UI pass are integrated; this is an initial implementation for the user to inspect on a phone, not a claim that the visual milestone is complete.

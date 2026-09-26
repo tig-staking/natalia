@@ -17,7 +17,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.animation.AnimatedVisibility
@@ -28,7 +34,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
@@ -90,7 +100,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private enum class GameScreen { ONBOARDING, HOME, MAP, PLACE, QUEST, WORD, QUIZ, PASSPORT }
+private enum class GameScreen { ONBOARDING, HOME, MAP, PLACE, QUEST, WORD, QUIZ, PASSPORT, REWARDS }
 
 @Composable
 private fun NataliaNaTropieApp() {
@@ -400,24 +410,52 @@ private fun NataliaNaTropieApp() {
     val animatedStars by animateIntAsState(progress.stars, animationSpec = tween(650), label = "player-stars")
     val nextScreen = nextGameScreen(progress, place)
 
-    MaterialTheme {
+    NataliaTheme {
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            Column(
-                modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
+            Column(Modifier.fillMaxSize()) {
+              Column(
+                modifier = Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                Text("NATALIA NA TROPIE", style = MaterialTheme.typography.headlineMedium)
-                Text("Barcelona · ${place.name}")
-                Card(Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("${level.title} · Poziom ${PlayerLevel.entries.indexOf(level) + 1}")
-                        Text("$animatedXp XP     ★ $animatedStars")
-                        Text("Paszport: ${if (place.id in progress.discoveredPlaceIds) "${place.name} ✓" else "czeka na pierwsze odkrycie"}")
+              ) {
+                if (screen != GameScreen.ONBOARDING) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    ) {
+                        Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Text("NATALIA NA TROPIE", style = MaterialTheme.typography.labelLarge, color = NataliaPalette.Muted)
+                                    Text("Barcelona · ${place.name}", style = MaterialTheme.typography.titleMedium)
+                                }
+                                Text("★ $animatedStars", style = MaterialTheme.typography.titleMedium, color = NataliaPalette.Ink)
+                            }
+                            val levelIndex = PlayerLevel.entries.indexOf(level)
+                            val nextLevel = PlayerLevel.entries.getOrNull(levelIndex + 1)
+                            val levelProgress = if (nextLevel == null) 1f else
+                                ((animatedXp - level.minXp).toFloat() / (nextLevel.minXp - level.minXp)).coerceIn(0f, 1f)
+                            LinearProgressIndicator(
+                                progress = { levelProgress },
+                                modifier = Modifier.fillMaxWidth().height(7.dp).clip(RoundedCornerShape(8.dp)),
+                                color = NataliaPalette.Gold,
+                                trackColor = Color.White,
+                            )
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("${level.title} · Poziom ${levelIndex + 1}", style = MaterialTheme.typography.bodyMedium)
+                                Text("$animatedXp XP", style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
                     }
                 }
 
                 when (screen) {
                     GameScreen.ONBOARDING -> {
+                        Image(
+                            painter = painterResource(R.drawable.natalka_barcelona_hero),
+                            contentDescription = "Natalka w Barcelonie",
+                            modifier = Modifier.fillMaxWidth().height(224.dp).clip(RoundedCornerShape(24.dp)),
+                            contentScale = ContentScale.Crop,
+                        )
                         Text("CZEŚĆ, NATALIA!", style = MaterialTheme.typography.headlineMedium)
                         Card(Modifier.fillMaxWidth()) {
                             Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -466,15 +504,35 @@ private fun NataliaNaTropieApp() {
                         }
                     }
                     GameScreen.HOME -> {
-                        Text("🕵️‍♀️", style = MaterialTheme.typography.displayMedium)
-                        Text("Cześć, Natalia! Twoja przygoda w Barcelonie czeka.")
-                        Button(onClick = { screen = nextScreen }, modifier = Modifier.fillMaxWidth()) {
-                            Text(if (place.id in progress.discoveredPlaceIds) "KONTYNUUJ PRZYGODĘ" else "POKAŻ MIEJSCE")
+                        Card(modifier = Modifier.fillMaxWidth()) {
+                            Column {
+                                Image(
+                                    painter = painterResource(R.drawable.natalka_barcelona_hero),
+                                    contentDescription = "Natalka odkrywa Barcelonę",
+                                    modifier = Modifier.fillMaxWidth().height(212.dp),
+                                    contentScale = ContentScale.Crop,
+                                )
+                                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    Text("Cześć, Natalka!", style = MaterialTheme.typography.headlineSmall)
+                                    Text("Twoja przygoda w Barcelonie czeka.", style = MaterialTheme.typography.bodyLarge)
+                                    Button(onClick = { screen = nextScreen }, modifier = Modifier.fillMaxWidth()) {
+                                        Text(if (place.id in progress.discoveredPlaceIds) "KONTYNUUJ PRZYGODĘ" else "POKAŻ MIEJSCE")
+                                    }
+                                }
+                            }
                         }
-                        OutlinedButton(onClick = { screen = GameScreen.MAP; requestMapLocation() }, modifier = Modifier.fillMaxWidth()) { Text("MAPA PRZYGODY") }
+                        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("TWOJA MISJA", style = MaterialTheme.typography.labelLarge, color = NataliaPalette.Muted)
+                                Text(place.name, style = MaterialTheme.typography.titleLarge)
+                                Text(if (place.id in progress.discoveredPlaceIds) "Miejsce odkryte — ruszaj dalej!" else "Odkryj słynną świątynię Gaudíego.")
+                                OutlinedButton(onClick = { screen = GameScreen.MAP; requestMapLocation() }, modifier = Modifier.fillMaxWidth()) {
+                                    Text("ZOBACZ NA MAPIE")
+                                }
+                            }
+                        }
                         OutlinedButton(onClick = { screen = nextScreen }, modifier = Modifier.fillMaxWidth()) { Text("MISJE") }
                         OutlinedButton(onClick = { screen = GameScreen.PASSPORT }, modifier = Modifier.fillMaxWidth()) { Text("PASZPORT") }
-                        Text("NAGRODY", style = MaterialTheme.typography.titleMedium)
                         val reservedStars = progress.pendingRewardRequests.values.sumOf { it.cost }
                         Button(
                             enabled = progress.stars - reservedStars >= 100,
@@ -514,16 +572,34 @@ private fun NataliaNaTropieApp() {
                         }
                     }
                     GameScreen.PLACE -> {
+                        Text("NOWE MIEJSCE", style = MaterialTheme.typography.labelLarge, color = NataliaPalette.Muted)
                         Text(place.name, style = MaterialTheme.typography.headlineSmall)
-                        Text(place.intro)
-                        Text(place.fact)
+                        Card(modifier = Modifier.fillMaxWidth()) {
+                            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Text(place.intro, style = MaterialTheme.typography.bodyLarge)
+                                Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = RoundedCornerShape(16.dp)) {
+                                    Text(place.fact, Modifier.padding(14.dp), style = MaterialTheme.typography.bodyMedium)
+                                }
+                            }
+                        }
                         Button(onClick = ::requestCheckIn, modifier = Modifier.fillMaxWidth()) {
                             Text("JESTEM NA MIEJSCU — SPRAWDŹ GPS")
                         }
                     }
                     GameScreen.QUEST -> {
-                        Text("MISJA", style = MaterialTheme.typography.titleLarge)
-                        Text(place.quest.prompt)
+                        Text("ETAP 1 Z 3 · MISJA", style = MaterialTheme.typography.labelLarge, color = NataliaPalette.Muted)
+                        LinearProgressIndicator(
+                            progress = { .34f },
+                            modifier = Modifier.fillMaxWidth().height(7.dp).clip(RoundedCornerShape(8.dp)),
+                            color = NataliaPalette.Teal,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                        )
+                        Card(modifier = Modifier.fillMaxWidth()) {
+                            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("MISJA", style = MaterialTheme.typography.titleLarge)
+                                Text(place.quest.prompt, style = MaterialTheme.typography.bodyLarge)
+                            }
+                        }
                         when (place.quest.type) {
                             com.tigstaking.natalia.game.QuestType.MULTIPLE_CHOICE ->
                                 place.quest.answers.forEachIndexed { index, answer ->
@@ -548,8 +624,13 @@ private fun NataliaNaTropieApp() {
                         }
                     }
                     GameScreen.WORD -> {
-                        Text("SŁÓWKO PO HISZPAŃSKU", style = MaterialTheme.typography.titleLarge)
-                        Text("${place.spanishWord.word} — ${place.spanishWord.meaning}", style = MaterialTheme.typography.headlineSmall)
+                        Text("ETAP 2 Z 3 · HISZPAŃSKI", style = MaterialTheme.typography.labelLarge, color = NataliaPalette.Muted)
+                        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                            Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(place.spanishWord.word, style = MaterialTheme.typography.headlineMedium)
+                                Text(place.spanishWord.meaning, style = MaterialTheme.typography.bodyLarge)
+                            }
+                        }
                         when (val status = speechStatus) {
                             SpanishSpeechStatus.Loading -> Text("Przygotowuję wymowę…")
                             SpanishSpeechStatus.Ready -> OutlinedButton(
@@ -575,8 +656,16 @@ private fun NataliaNaTropieApp() {
                         ) { Text("ZAPAMIĘTANE") }
                     }
                     GameScreen.QUIZ -> {
-                        Text("QUIZ", style = MaterialTheme.typography.titleLarge)
-                        Text(place.quiz.question)
+                        Text("ETAP 3 Z 3 · QUIZ", style = MaterialTheme.typography.labelLarge, color = NataliaPalette.Muted)
+                        LinearProgressIndicator(
+                            progress = { .72f },
+                            modifier = Modifier.fillMaxWidth().height(7.dp).clip(RoundedCornerShape(8.dp)),
+                            color = NataliaPalette.Teal,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                        )
+                        Card(modifier = Modifier.fillMaxWidth()) {
+                            Text(place.quiz.question, Modifier.padding(18.dp), style = MaterialTheme.typography.titleLarge)
+                        }
                         place.quiz.answers.forEachIndexed { index, answer ->
                             OutlinedButton(
                                 onClick = {
@@ -601,16 +690,57 @@ private fun NataliaNaTropieApp() {
                         }
                     }
                     GameScreen.PASSPORT -> {
-                        Text("PASZPORT BARCELONY", style = MaterialTheme.typography.titleLarge)
-                        if (place.id in progress.discoveredPlaceIds) {
-                            Text("Odkryte: ${place.name}")
-                        } else Text("${place.name} czeka na odkrycie.")
-                        if ("badge:${place.id}" in progress.earnedBadgeIds) {
-                            Text("✓ UKOŃCZONE · ODZNAKA: ${place.badge}")
-                        } else Text("Odznaka czeka na ukończenie misji i quizu.")
+                        Text("PASZPORT BARCELONY", style = MaterialTheme.typography.headlineSmall)
+                        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Text("BARCELONA", style = MaterialTheme.typography.labelLarge, color = NataliaPalette.Muted)
+                                Text(place.name, style = MaterialTheme.typography.headlineSmall)
+                                Text(if (place.id in progress.discoveredPlaceIds) "ODKRYTA!" else "Czeka na Twoje odkrycie")
+                                Surface(color = Color.White, shape = RoundedCornerShape(20.dp), modifier = Modifier.fillMaxWidth()) {
+                                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Text(if (place.id in progress.discoveredPlaceIds) "✦  ODKRYTA  ✦" else "✧  JESZCZE NIEODKRYTA  ✧", color = NataliaPalette.Coral, style = MaterialTheme.typography.titleMedium)
+                                        Text(place.name, style = MaterialTheme.typography.titleLarge)
+                                    }
+                                }
+                                if ("badge:${place.id}" in progress.earnedBadgeIds) {
+                                    Text("✓ UKOŃCZONE · ODZNAKA: ${place.badge}", style = MaterialTheme.typography.titleMedium, color = NataliaPalette.Ink)
+                                } else Text("Odznaka czeka na ukończenie misji i quizu.")
+                                if ("badge:${place.id}" in progress.earnedBadgeIds) {
+                                    Image(
+                                        painter = painterResource(R.drawable.avatar_victory),
+                                        contentDescription = "Natalka świętuje zdobycie odznaki",
+                                        modifier = Modifier.fillMaxWidth().height(168.dp),
+                                        contentScale = ContentScale.Fit,
+                                    )
+                                }
+                            }
+                        }
                         Button(onClick = { screen = GameScreen.HOME }, modifier = Modifier.fillMaxWidth()) {
                             Text("WRÓĆ DO DOMU")
                         }
+                    }
+                    GameScreen.REWARDS -> {
+                        Text("NAGRODY", style = MaterialTheme.typography.headlineSmall)
+                        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Text("MAŁA PRZYJEMNOŚĆ", style = MaterialTheme.typography.labelLarge, color = NataliaPalette.Muted)
+                                Text("Lody po przygodzie", style = MaterialTheme.typography.titleLarge)
+                                Text("Twoje gwiazdki: ${progress.stars} ★", style = MaterialTheme.typography.bodyLarge)
+                                val reservedStars = progress.pendingRewardRequests.values.sumOf { it.cost }
+                                Button(
+                                    enabled = progress.stars - reservedStars >= 100,
+                                    onClick = {
+                                        scope.launch {
+                                            val requestId = "treat-${UUID.randomUUID()}"
+                                            val created = progressRepository.requestRedemptionOnce(requestId, 100)
+                                            message = if (created) "Prośba o lody wysłana do rodzica (100 ★)." else "Nie udało się wysłać prośby o nagrodę."
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) { Text("POPROŚ O LODY · 100 ★") }
+                            }
+                        }
+                        OutlinedButton(onClick = { showParentDialog = true }, modifier = Modifier.fillMaxWidth()) { Text("TRYB RODZICA") }
                     }
                 }
 
@@ -800,6 +930,32 @@ private fun NataliaNaTropieApp() {
                         },
                     )
                 }
+              }
+              if (screen != GameScreen.ONBOARDING) {
+                  val missionDestination = if (nextScreen == GameScreen.PASSPORT) GameScreen.PASSPORT else nextScreen
+                  NavigationBar(containerColor = Color.White) {
+                      val items = listOf(
+                          Triple("Odkrywaj", "⌖", GameScreen.HOME),
+                          Triple("Misje", "⚑", missionDestination),
+                          Triple("Paszport", "▤", GameScreen.PASSPORT),
+                          Triple("Nagrody", "☆", GameScreen.REWARDS),
+                      )
+                      items.forEach { (label, glyph, destination) ->
+                          val selected = when (destination) {
+                              GameScreen.HOME -> screen == GameScreen.HOME || screen == GameScreen.MAP
+                              GameScreen.PASSPORT -> screen == GameScreen.PASSPORT
+                              GameScreen.REWARDS -> screen == GameScreen.REWARDS
+                              else -> screen in setOf(GameScreen.PLACE, GameScreen.QUEST, GameScreen.WORD, GameScreen.QUIZ)
+                          }
+                          NavigationBarItem(
+                              selected = selected,
+                              onClick = { screen = destination },
+                              icon = { Text(glyph, style = MaterialTheme.typography.titleLarge) },
+                              label = { Text(label) },
+                          )
+                      }
+                  }
+              }
             }
         }
     }
@@ -817,17 +973,21 @@ private fun GameCelebration(message: String) {
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
             ) {
-                MangaBurst()
-                val reaction = when {
-                    message.startsWith("Hmm") -> "🤔"
-                    message.contains("LODY") -> "🍦"
-                    message.startsWith("AWANS") -> "🤩"
-                    else -> "😄"
+                val avatar = when {
+                    message.startsWith("Hmm") -> R.drawable.avatar_thinking
+                    message.contains("LODY") -> R.drawable.avatar_icecream
+                    message.contains("ODKRY") -> R.drawable.avatar_surprised
+                    else -> R.drawable.avatar_victory
                 }
-                Text(reaction, style = MaterialTheme.typography.headlineMedium)
+                Image(
+                    painter = painterResource(avatar),
+                    contentDescription = "Reakcja Natalki",
+                    modifier = Modifier.width(68.dp).height(92.dp),
+                    contentScale = ContentScale.Fit,
+                )
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(message, style = MaterialTheme.typography.titleMedium)
-                    Text("✧  ★  ✧")
+                    Text("✧  ✦  ✧", color = NataliaPalette.Gold)
                 }
             }
         }
@@ -844,9 +1004,9 @@ private fun MangaBurst() {
             val angle = Math.PI * 2.0 * index / 16.0
             val dx = kotlin.math.cos(angle).toFloat()
             val dy = kotlin.math.sin(angle).toFloat()
-            drawLine(Color(0xFFFFB703), Offset(center.x + dx * inner, center.y + dy * inner), Offset(center.x + dx * outer, center.y + dy * outer), 3f)
+            drawLine(NataliaPalette.Gold, Offset(center.x + dx * inner, center.y + dy * inner), Offset(center.x + dx * outer, center.y + dy * outer), 3f)
         }
-        drawCircle(Color(0xFFFFD166), size.minDimension * .18f, center)
+        drawCircle(NataliaPalette.Gold, size.minDimension * .18f, center)
     }
 }
 

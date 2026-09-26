@@ -11,7 +11,9 @@ MainActivity (Compose screens and user actions)
         └── FusedLocationProvider → accurate foreground GPS fix
 ```
 
-- `app/src/main/java/com/tigstaking/natalia/MainActivity.kt` — Compose UI and wiring for first-run onboarding, Home, online street map screen, place check-in, quest, Spanish word/TTS, quiz, passport, child reward requests, the PIN-gated parent approval dialog, and reusable event celebrations. Parent access locks when the app goes to the background. Debug-only Developer Mode entry point is here; it persists/removes the test POI, requests location permission before creating it, advances game stages, adjusts test progress, resets progress, and shows GPS diagnostics. Screen or user-action behavior starts here.
+- `app/src/main/java/com/tigstaking/natalia/MainActivity.kt` — Compose UI and wiring for first-run onboarding, Home, online street map screen, place check-in, quest, Spanish word/TTS, quiz, passport, child reward requests, the PIN-gated parent approval dialog, bottom navigation, and reusable event celebrations. Parent access locks when the app goes to the background. Debug-only Developer Mode entry point is here; it persists/removes the test POI, requests location permission before creating it, advances game stages, adjusts test progress, resets progress, and shows GPS diagnostics. Screen or user-action behavior starts here.
+- `app/src/main/java/com/tigstaking/natalia/NataliaTheme.kt` — centralized palette, typography, and shape tokens used by the Compose screens.
+- `app/src/main/res/drawable-nodpi/` — approved Barcelona Home hero artwork and the first semantic avatar reaction poses; see `docs/AVATAR_ASSETS.md`.
 - `app/src/main/java/com/tigstaking/natalia/StreetMap.kt` — MapLibre Android view, OpenFreeMap style loading, POI/geofence/GPS overlays, map lifecycle, and a schematic fallback if online style loading times out. Map tiles require internet; no offline city pack is implemented yet.
 - `docs/ANIMATIONS.md` — Current celebration behavior and roadmap for avatar, badge, and level-up motion.
 - `docs/AVATAR_ASSETS.md` — Placeholder pose names and future drawable asset conventions.

@@ -26,7 +26,7 @@ Real reference photographs are private source material. Keep them outside Git an
 
 ## 3. Target style
 
-Preferred direction: **expressive, polished 3D animated travel adventure** — warm and appealing like a high-quality family animated feature (Pixar-like as a broad shorthand), while remaining an original character design.
+Preferred direction: **warm, hand-drawn 2D travel-adventure illustration** with a soft painterly finish. The user approved the latest Barcelona character illustration as the visual style reference. Balance the clear inked linework and illustrated setting of the first reference with the softly rendered face, hair, and light of the second reference. Do not use a 3D feature-animation or CGI look.
 
 The character should feel:
 
@@ -51,8 +51,9 @@ She should not feel:
 
 Prefer:
 
-- carefully sculpted 3D forms and a hand-drawn sensibility,
-- soft studio-quality shading and natural light,
+- clean, fine dark-brown ink contours and confident drawn shapes,
+- softly painted/cel-shaded color transitions on face, hair, and clothing,
+- subtly textured, fully illustrated environments and natural warm light,
 - moderate, mobile-readable detail,
 - expressive eyes while retaining the reference's natural eye shape,
 - recognizable face and natural facial proportions,
@@ -70,7 +71,7 @@ All character assets should preserve:
 - the same hairstyle unless explicitly changed,
 - consistent eye color,
 - consistent proportions,
-- the same 3D animated rendering and material treatment,
+- the same 2D ink-and-painterly rendering balance,
 - a consistent palette,
 - a consistent age appearance.
 
@@ -163,27 +164,23 @@ Do not generate all poses before the base character design has been approved.
 
 Use the real photograph as the visual reference.
 
-### Stage 2 — Character concepts
+### Stage 2 — Approved character style
 
-Create approximately three stylistic interpretations of the same person, all within the newly selected stylized 3D animated family-adventure direction:
+The user selected the hybrid 2D drawn direction shown in the latest Barcelona illustration. Keep this style fixed:
 
-- **A. Clean 3D Animation** — restrained, modern, and UI-friendly, with natural proportions and soft materials.
-- **B. Feature Animation** — warmer facial acting and richer sculpted lighting, like a polished family adventure film; original design, not a copy of any studio character.
-- **C. 3D Game Adventure** — a more graphic silhouette and slightly more dynamic pose, still grounded, age-appropriate, and non-fantasy.
+- **Approved style** — 2D hand-drawn outlines, soft painterly/cel shading, natural child proportions, and detailed but readable illustrated travel environments.
 
-All three should preserve the same identity, haircut, age, and base outfit, and harmonize with `docs/DESIGN_SYSTEM.md`.
+### Stage 3 — UI approval
 
-### Stage 3 — Selection
-
-Choose one direction before producing a full asset library.
+The user approved the refreshed B+C UI concept on 2026-09-26. Preserve B's simple Barcelona passport and use only compact progression cues from C.
 
 ### Stage 4 — Master character
 
-Create one definitive base character. This becomes the visual reference for all later character assets.
+Create one definitive base character in the approved style. This becomes the visual reference for all later character assets.
 
 ### Stage 5 — Pose set
 
-Create only the required expressions and poses.
+The initial integrated set contains the Barcelona hero, thinking, discovery/surprised, and victory poses. Add only expressions needed by the real screens and keep future art outside Git until it is selected for app use.
 
 ## 13. Important AI generation rule
 
