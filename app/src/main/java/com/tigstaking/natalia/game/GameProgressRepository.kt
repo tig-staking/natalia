@@ -60,6 +60,15 @@ class GameProgressRepository(private val dataStore: DataStore<Preferences>) {
         return result
     }
 
+    suspend fun adjustStarsOnce(eventId: String, amount: Int): GameProgress {
+        var result = GameProgress()
+        dataStore.edit { preferences ->
+            result = decode(preferences).adjustStarsOnce(eventId, amount)
+            encode(preferences, result)
+        }
+        return result
+    }
+
     suspend fun discoverPlace(placeId: String, xp: Int, stars: Int): GameProgress =
         awardStageOnce(RewardEvent("discovery:$placeId", "DISCOVERY", xp, stars), discoveredPlacesKey, placeId)
 

@@ -7,6 +7,7 @@ The Android app lives in `app/`. Compose screens are presentation only; game rul
 - `CityPack` parses versioned city/place data, starting with one Barcelona place.
 - `GameProgress` applies XP/star events only once and rejects XP spending or negative star balances.
 - `GameProgressRepository` stores progress locally with Preferences DataStore and records an append-only reward ledger.
+- PIN-gated parent star corrections are recorded as `PARENT` ledger events. The repository checks the unreserved balance in the same DataStore transaction before subtracting stars.
 - `GameEngine` awards discovery, quest, Spanish word and quiz rewards from each place's reward plan; wrong quiz answers can be retried without changing progress. Correct quiz completion and the place badge are saved in one DataStore transaction, so interruption cannot leave a completed quiz without its badge.
 - Quest types are data-driven: observation and say-phrase use a player confirmation, multiple-choice requires the configured correct answer, and parent-check requires an explicit PIN-gated parent confirmation.
 - `Proximity` calculates straight-line distance in meters and checks a place radius.

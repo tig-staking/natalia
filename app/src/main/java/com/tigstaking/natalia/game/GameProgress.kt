@@ -43,6 +43,19 @@ data class GameProgress(
         )
     }
 
+    fun adjustStarsOnce(eventId: String, amount: Int): GameProgress {
+        require(eventId.isNotBlank()) { "Adjustment id must not be blank" }
+        require(amount != 0) { "Adjustment must change the star balance" }
+        if (eventId in appliedEventIds) return this
+        val reserved = pendingRewardRequests.values.sumOf { it.cost }
+        require(stars + amount >= reserved) { "Adjustment would spend reserved stars" }
+        return copy(
+            stars = stars + amount,
+            appliedEventIds = appliedEventIds + eventId,
+            ledger = ledger + LedgerEntry(eventId, "PARENT", xp = 0, stars = amount),
+        )
+    }
+
     fun requestRedemption(requestId: String, cost: Int): GameProgress {
         require(requestId.isNotBlank()) { "Redemption id must not be blank" }
         require(cost > 0) { "Reward cost must be greater than zero" }

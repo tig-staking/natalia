@@ -70,20 +70,16 @@ Dopiero po potwierdzeniu, że silnik działa poprawnie, zostanie dodana pełna z
 
 ## Technologia
 
-Planowany stack:
+Obecny stack silnika:
 
 - Kotlin
 - Jetpack Compose
 - Material 3
-- Navigation Compose
-- MVVM
-- Room
 - DataStore
-- Google Maps SDK for Android
 - Google Play Services Location
 - Android TextToSpeech
-- lokalne powiadomienia
-- opcjonalnie Android Geofencing API
+
+Do geograficznej mapy ulic planowany jest MapLibre i źródło danych dopuszczające pakiety offline. Obecny podgląd punktu nie wymaga klucza mapowego ani internetu.
 
 Projekt ma działać możliwie **local-first**.
 
@@ -164,6 +160,15 @@ Nie należy używać hardcodowanych lokalnych ścieżek zależnych od konkretneg
 ## Uruchomienie i orientacja w kodzie
 
 Instrukcje klonowania, konfiguracji Android Studio, budowania APK i pracy na kilku komputerach znajdują się w [docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md). Krótko: `git clone`, otwórz katalog projektu w Android Studio, poczekaj na Gradle Sync i uruchom konfigurację `app`.
+
+### Szybki podgląd obecnej wersji
+
+1. Otwórz projekt w Android Studio i uruchom `app` na emulatorze lub telefonie. Gotowy lokalny plik po komendzie `gradlew.bat assembleDebug` znajduje się w `app/build/outputs/apk/debug/app-debug.apk`.
+2. Przejdź onboarding i na ekranie głównym otwórz `Developer mode`. Przycisk `ZALICZ NASTĘPNY ETAP` pozwala przejść kolejno przez odkrycie, misję, słówko, quiz i paszport bez pobytu w Barcelonie.
+3. Dodaj testowe gwiazdki w Developer Mode, poproś o lody i otwórz Tryb rodzica. Ustaw czterocyfrowy PIN, zatwierdź prośbę i sprawdź saldo oraz historię. Zamknij i uruchom aplikację ponownie, aby zobaczyć zapisany postęp.
+4. Do testu prawdziwego GPS na telefonie wybierz w Developer Mode `UTWÓRZ TESTOWE MIEJSCE TUTAJ`, a następnie użyj `JESTEM NA MIEJSCU — SPRAWDŹ GPS`. Testowy punkt jest zapisany tylko na tym urządzeniu.
+
+Obecna mapa pokazuje współrzędne, punkt i pozycję GPS bez ulic. Geograficzna mapa Barcelony z pobieraniem offline i odczytem online jest kolejnym etapem; limit pobranych danych wynosi 200 MB. Szczegóły są w [docs/LOCATION.md](docs/LOCATION.md).
 
 Opis ról poszczególnych plików źródłowych i wskazówki, gdzie szukać typowych błędów, znajdują się w [docs/CODE_MAP.md](docs/CODE_MAP.md). Bieżący stan prac i następne kroki zapisujemy w [WORKLOG.md](WORKLOG.md).
 

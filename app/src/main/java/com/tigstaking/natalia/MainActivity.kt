@@ -581,10 +581,38 @@ private fun NataliaNaTropieApp() {
                             pinConfirmation = ""
                             pinMessage = ""
                         },
-                        title = { Text(if (parentAuthenticated) "Prośby o nagrody" else "Tryb rodzica") },
+                        title = { Text("Tryb rodzica") },
                         text = {
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Column(
+                                modifier = Modifier.verticalScroll(rememberScrollState()),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
                                 if (parentAuthenticated) {
+                                    val reservedForRewards = progress.pendingRewardRequests.values.sumOf { it.cost }
+                                    Text("Stan Natalii: ${progress.xp} XP · ${progress.stars} ★")
+                                    Text("Zarezerwowane na nagrody: $reservedForRewards ★")
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        TextButton(onClick = {
+                                            scope.launch {
+                                                progressRepository.adjustStarsOnce("parent:${UUID.randomUUID()}", 10)
+                                                message = "Rodzic dodał 10 ★."
+                                            }
+                                        }) { Text("DODAJ 10 ★") }
+                                        TextButton(
+                                            enabled = progress.stars - reservedForRewards >= 10,
+                                            onClick = {
+                                                scope.launch {
+                                                    progressRepository.adjustStarsOnce("parent:${UUID.randomUUID()}", -10)
+                                                    message = "Rodzic odjął 10 ★."
+                                                }
+                                            },
+                                        ) { Text("ODEJMIJ 10 ★") }
+                                    }
+                                    Text("Ostatnie zmiany gwiazdek:")
+                                    progress.ledger.filter { it.stars != 0 }.takeLast(5).asReversed().forEach { entry ->
+                                        val sign = if (entry.stars > 0) "+" else ""
+                                        Text("${entry.source}: $sign${entry.stars} ★")
+                                    }
                                     if (parentQuestPending) {
                                         Text("Rodzicu, potwierdź wykonanie misji przez Natalię.")
                                         Button(onClick = {

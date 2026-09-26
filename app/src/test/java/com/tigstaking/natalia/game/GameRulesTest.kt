@@ -68,6 +68,21 @@ class GameRulesTest {
     }
 
     @Test
+    fun parentStarAdjustmentPreservesReservationsAndIsIdempotent() {
+        val requested = GameProgress(xp = 70, stars = 110).requestRedemption("ice-cream", 100)
+        val adjusted = requested.adjustStarsOnce("parent:1", -10).adjustStarsOnce("parent:1", -10)
+
+        assertEquals(70, adjusted.xp)
+        assertEquals(100, adjusted.stars)
+        assertEquals(1, adjusted.ledger.size)
+        assertEquals("PARENT", adjusted.ledger.single().source)
+        assertThrows(IllegalArgumentException::class.java) {
+            adjusted.adjustStarsOnce("parent:2", -10)
+        }
+        assertEquals(0, adjusted.approveRedemption("ice-cream").stars)
+    }
+
+    @Test
     fun levelsUseConfiguredThresholds() {
         assertEquals(PlayerLevel.EXPLORER, PlayerLevel.forXp(49))
         assertEquals(PlayerLevel.TRACKER, PlayerLevel.forXp(50))
