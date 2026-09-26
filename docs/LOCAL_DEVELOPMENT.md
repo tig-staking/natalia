@@ -13,7 +13,7 @@
 3. Install Android SDK Platform 35 if Android Studio asks.
 4. Run the `app` configuration on an emulator or connected phone.
 
-The initial app shell does not require a Maps key. When Google Maps is introduced, add the key to the ignored local `local.properties` file and follow the updated instructions here; never commit that file or put a key in source control.
+The online street map uses MapLibre and the public OpenFreeMap style; no Google Maps key or machine-specific map configuration is required. The map needs internet access. Core game progress and check-in rules remain local.
 
 ## Build and install
 

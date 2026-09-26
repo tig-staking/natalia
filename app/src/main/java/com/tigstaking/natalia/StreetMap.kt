@@ -131,8 +131,9 @@ internal fun StreetMap(
         readyMap.addPolygon(
             PolygonOptions()
                 .addAll(geofencePolygon(poi, radiusMeters))
-                .fillColor(Color.argb(55, 80, 110, 255))
-                .strokeColor(Color.rgb(62, 86, 225)),
+                .fillColor(Color.rgb(80, 110, 255))
+                .strokeColor(Color.rgb(62, 86, 225))
+                .alpha(0.18f),
         )
         readyMap.addMarker(
             MarkerOptions().position(LatLng(poi.latitude, poi.longitude)).title("Miejsce misji"),

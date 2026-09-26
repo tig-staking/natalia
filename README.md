@@ -78,8 +78,9 @@ Obecny stack silnika:
 - DataStore
 - Google Play Services Location
 - Android TextToSpeech
+- MapLibre Native + OpenFreeMap / OpenStreetMap (online street map)
 
-Do geograficznej mapy ulic planowany jest MapLibre i źródło danych dopuszczające pakiety offline. Obecny podgląd punktu nie wymaga klucza mapowego ani internetu.
+Mapa ulic ładuje się online i nie wymaga klucza Google. Rdzeń gry, check-in i zapis postępu działają lokalnie; pakiet map offline nie jest jeszcze dostępny.
 
 Projekt ma działać możliwie **local-first**.
 
