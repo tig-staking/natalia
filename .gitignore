@@ -32,3 +32,6 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# Private reference photos (never commit Natalia's real photos)
+foty/
